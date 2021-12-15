@@ -13,6 +13,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import iudx.gis.server.apiserver.handlers.AuthHandler;
 import iudx.gis.server.apiserver.handlers.ValidationHandler;
 import iudx.gis.server.apiserver.response.ResponseType;
 import iudx.gis.server.apiserver.response.RestResponse;
@@ -153,6 +154,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     router
         .post(ADMIN_BASE_PATH)
         .handler(adminCrudPathValidationHandler)
+        .handler(AuthHandler.create(vertx))
         .handler(this::handlePostAdminPath)
         .failureHandler(validationsFailureHandler);
 
