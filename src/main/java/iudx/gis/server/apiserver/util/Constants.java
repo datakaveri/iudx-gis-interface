@@ -32,6 +32,7 @@ public class Constants {
 
   // path regex
   public static final String ENTITITES_URL_REGEX = NGSILD_ENTITIES_URL + "(.*)";
+  public static final String ADMIN_URL_REGEX = ADMIN_BASE_PATH + "(.*)";
 
   /** Accept Headers and CORS */
   public static final String MIME_APPLICATION_JSON = "application/json";
@@ -109,5 +110,13 @@ public class Constants {
   public static final int VALIDATION_ALLOWED_COORDINATES = 10;
   public static final List<String> VALIDATION_ALLOWED_HEADERS = List.of("token", "options");
 
-
+  public static final String DOMAIN = "domain";
+  public static final String USERSHA = "userSha";
+  public static final String JSON_ALIAS = "alias";
+  public static final String RESOURCE_SERVER = "resourceServer";
+  public static final String RESOURCE_GROUP = "resourceGroup";
+  public static final String RESOURCE_NAME = "resourceName";
+  public static final String USER_ID = "userid";
+  public static final String API = "api";
+  public static final String AUTH_INFO = "authInfo";
 }

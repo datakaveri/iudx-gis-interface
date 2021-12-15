@@ -20,6 +20,8 @@ public class Constants {
   public static final String CAT_ITEM_PATH = "/iudx/cat/v1/item";
   public static final String SERVER_MODE = "serverMode";
 
+  public static final String JSON_USERID = "userid";
+
   public static final String AUDIENCE = "host";
   public static final String PORT = "catServerPort";
   public static final String HOST = "catServerHost";

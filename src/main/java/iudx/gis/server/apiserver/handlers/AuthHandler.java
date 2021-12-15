@@ -3,12 +3,19 @@ package iudx.gis.server.apiserver.handlers;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import iudx.gis.server.apiserver.response.ResponseUrn;
+import iudx.gis.server.apiserver.util.HttpStatusCode;
 import iudx.gis.server.authenticate.AuthenticatorService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Map;
+
+import static iudx.gis.server.apiserver.response.ResponseUrn.INVALID_TOKEN;
+import static iudx.gis.server.apiserver.response.ResponseUrn.RESOURCE_NOT_FOUND;
 import static iudx.gis.server.apiserver.util.Constants.*;
 
 public class AuthHandler implements Handler<RoutingContext> {
@@ -97,6 +104,67 @@ public class AuthHandler implements Handler<RoutingContext> {
           .setStatusCode(statusCode.getValue())
           .end(generateResponse(INVALID_TOKEN, statusCode).toString());
     }
+  }
+
+  private String getNormalizedPath(String url) {
+    LOGGER.debug("URL : {}", url);
+    String path = null;
+    if (url.matches(ENTITITES_URL_REGEX)) {
+      path = NGSILD_ENTITIES_URL;
+    } else if (url.matches(ADMIN_URL_REGEX)) {
+      path = ADMIN_BASE_PATH;
+    }
+    return path;
+  }
+
+  private String getId4rmPath(RoutingContext context) {
+    StringBuilder id = null;
+    Map<String, String> pathParams = context.pathParams();
+    LOGGER.info("path params :" + pathParams);
+    if (pathParams != null && !pathParams.isEmpty()) {
+      if (pathParams.containsKey(DOMAIN)
+          && pathParams.containsKey(USERSHA)
+          && pathParams.containsKey(RESOURCE_SERVER)
+          && pathParams.containsKey(RESOURCE_GROUP)) {
+        id = new StringBuilder();
+        id.append(pathParams.get(DOMAIN));
+        id.append("/").append(pathParams.get(USERSHA));
+        id.append("/").append(pathParams.get(RESOURCE_SERVER));
+        id.append("/").append(pathParams.get(RESOURCE_GROUP));
+        if (pathParams.containsKey(RESOURCE_NAME)) {
+          id.append("/").append(pathParams.get(RESOURCE_NAME));
+        }
+        LOGGER.info("id :" + id.toString());
+      } else if (pathParams.containsKey(USER_ID) && pathParams.containsKey(JSON_ALIAS)) {
+        id = new StringBuilder();
+        id.append(pathParams.get(USER_ID))
+            .append("/")
+            .append(pathParams.get(JSON_ALIAS));
+      }
+
+    }
+    LOGGER.info("id :" + id);
+    return id != null ? id.toString() : null;
+  }
+
+  private String getId4rmRequest() {
+    return request.getParam(ID);
+  }
+
+  private String getId4rmBody(RoutingContext context, String api) {
+    JsonObject body = context.getBodyAsJson();
+    String id = null;
+    if (body != null) {
+      JsonArray array = body.getJsonArray(JSON_ENTITIES);
+      if (array != null) {
+          JsonObject json = array.getJsonObject(0);
+          if (json != null) {
+            id = json.getString(ID);
+        }
+      }
+    }
+    LOGGER.info("id : " + id);
+    return id;
   }
 
   private JsonObject generateResponse(ResponseUrn urn, HttpStatusCode statusCode) {
