@@ -16,10 +16,14 @@ import io.vertx.ext.web.handler.CorsHandler;
 import iudx.gis.server.apiserver.handlers.AuthHandler;
 import iudx.gis.server.apiserver.handlers.ValidationHandler;
 import iudx.gis.server.apiserver.response.ResponseType;
+import static iudx.gis.server.apiserver.response.ResponseUrn.*;
+
+import iudx.gis.server.apiserver.response.ResponseUrn;
 import iudx.gis.server.apiserver.response.RestResponse;
 import iudx.gis.server.apiserver.service.CatalogueService;
+import iudx.gis.server.apiserver.util.HttpStatusCode;
 import iudx.gis.server.apiserver.util.RequestType;
-import iudx.gis.server.apiserver.validation.ValidationFailureHandler;
+import iudx.gis.server.apiserver.handlers.ValidationFailureHandler;
 import iudx.gis.server.authenticate.AuthenticatorService;
 import iudx.gis.server.database.DatabaseService;
 import org.apache.logging.log4j.LogManager;
@@ -151,6 +155,13 @@ public class ApiServerVerticle extends AbstractVerticle {
     ValidationHandler adminCrudPathValidationHandler =
         new ValidationHandler(vertx, RequestType.ADMIN_CRUD_PATH);
 
+    ValidationHandler adminCrudPathIdValidationHandler =
+        new ValidationHandler(vertx, RequestType.ADMIN_CRUD_PATH_DELETE);
+
+    router
+        .get(ADMIN_BASE_PATH)
+        .handler(this::handleGetAdminPath);
+
     router
         .post(ADMIN_BASE_PATH)
         .handler(adminCrudPathValidationHandler)
@@ -166,16 +177,28 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     router
         .delete(ADMIN_BASE_PATH)
+        .handler(adminCrudPathIdValidationHandler)
         .handler(this::handleDeleteAdminPath)
         .failureHandler(validationsFailureHandler);
 
+    router.route().last().handler(requestHandler -> {
+      HttpServerResponse response = requestHandler.response();
+      response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+          .setStatusCode(404)
+          .end(generateResponse(HttpStatusCode.NOT_FOUND, YET_NOT_IMPLEMENTED).toString());
+    });
+
     catalogueService = new CatalogueService(vertx, config());
+  }
+
+  private void handleGetAdminPath(RoutingContext routingContext) {
+    handleResponse(routingContext.response(), HttpStatusCode.METHOD_NOT_ALLOWED, METHOD_NOT_FOUND);
   }
 
   private void handleDeleteAdminPath(RoutingContext routingContext) {
     LOGGER.debug("Info:handleDeleteAdminPath method started.;");
     HttpServerResponse response = routingContext.response();
-    String resourceId = routingContext.queryParams().get("id");
+    String resourceId = routingContext.queryParams().get(ID);
 
     database.deleteAdminDetails(resourceId, ar -> {
       if (ar.succeeded()) {
@@ -246,7 +269,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     LOGGER.debug("Info: IUDX query json;" + json);
     // check Catalogue Cache before search
     Future<Boolean> isIdPresent = catalogueService.isItemExist(id);
-    isIdPresent.onSuccess(handler -> executeSearchQuery(json, response)).onFailure(handler -> handleResponse(response, ResponseType.NotFound));
+    isIdPresent
+        .onSuccess(handler -> executeSearchQuery(json, response))
+        .onFailure(handler -> processBackendResponse(response, handler.getCause().getMessage()));
   }
 
   private void handleEntitiesQuery(RoutingContext routingContext) {
@@ -270,7 +295,7 @@ public class ApiServerVerticle extends AbstractVerticle {
       isIdPresent.onComplete(handler -> executeSearchQuery(json, response));
     } else {
       LOGGER.error("Fail: Validation failed");
-      handleResponse(response, ResponseType.BadRequestData, MSG_BAD_QUERY);
+      handleResponse(response, HttpStatusCode.BAD_REQUEST, RESOURCE_NOT_FOUND);
     }
   }
 
@@ -293,7 +318,9 @@ public class ApiServerVerticle extends AbstractVerticle {
   }
 
   private void handleSuccessResponse(HttpServerResponse response, int statusCode, String result) {
-    response.putHeader(CONTENT_TYPE, APPLICATION_JSON).setStatusCode(statusCode).end(result);
+    response.putHeader(CONTENT_TYPE, APPLICATION_JSON).setStatusCode(statusCode).end(
+        generateResponse(HttpStatusCode.SUCCESS, SUCCESS, result).toString()
+    );
   }
 
   private void processBackendResponse(HttpServerResponse response, String failureMessage) {
@@ -301,38 +328,53 @@ public class ApiServerVerticle extends AbstractVerticle {
     try {
       JsonObject json = new JsonObject(failureMessage);
       int type = json.getInteger(JSON_TYPE);
-      ResponseType responseType = ResponseType.fromCode(type);
-      response.putHeader(CONTENT_TYPE, APPLICATION_JSON).setStatusCode(type)
-          .end(generateResponse(responseType).toString());
+      HttpStatusCode status = HttpStatusCode.getByValue(type);
+      String urnTitle = json.getString(JSON_TITLE);
+      ResponseUrn urn;
+      if (urnTitle != null) {
+        urn = ResponseUrn.fromCode(urnTitle);
+      } else {
+        urn = ResponseUrn.fromCode(type + "");
+      }
+      String errorMessage = json.getString(ERROR_MESSAGE);
+      response.putHeader(CONTENT_TYPE, APPLICATION_JSON)
+          .setStatusCode(type);
+      if (errorMessage==null || errorMessage.isEmpty()) {
+        response.end(generateResponse(status, urn).toString());
+      }
+      else {
+        response.end(generateResponse(status, urn, errorMessage).toString());
+      }
     } catch (DecodeException ex) {
-      LOGGER.error("ERROR : Expecting Json received else from backend service");
-      handleResponse(response, ResponseType.BadRequestData);
+      LOGGER.error("ERROR : Expecting Json from backend service [ jsonFormattingException ]");
+      handleResponse(response, HttpStatusCode.BAD_REQUEST, BACKING_SERVICE_FORMAT);
     }
 
   }
 
-  private void handleResponse(HttpServerResponse response, ResponseType responseType) {
-    response.putHeader(CONTENT_TYPE, APPLICATION_JSON).setStatusCode(responseType.getCode())
-        .end(generateResponse(responseType).toString());
+  private void handleResponse(HttpServerResponse response, HttpStatusCode code, ResponseUrn urn) {
+    handleResponse(response, code, urn, code.getDescription());
   }
 
-  private void handleResponse(HttpServerResponse response, ResponseType responseType,
-      String message) {
-    response.putHeader(CONTENT_TYPE, APPLICATION_JSON).setStatusCode(responseType.getCode())
-        .end(generateResponse(responseType, message).toString());
+  private void handleResponse(HttpServerResponse response, HttpStatusCode statusCode,
+                              ResponseUrn urn, String message) {
+    response.putHeader(CONTENT_TYPE, APPLICATION_JSON)
+        .setStatusCode(statusCode.getValue())
+        .end(generateResponse(statusCode, urn, message).toString());
   }
 
-  private JsonObject generateResponse(ResponseType responseType) {
-    int type = responseType.getCode();
-    return new RestResponse.Builder().withType(type)
-        .withTitle(ResponseType.fromCode(type).getMessage())
-        .withMessage(ResponseType.fromCode(type).getMessage()).build().toJson();
+
+  private JsonObject generateResponse(HttpStatusCode statusCode, ResponseUrn urn) {
+    return generateResponse(statusCode, urn, statusCode.getDescription());
   }
 
-  private JsonObject generateResponse(ResponseType responseType, String message) {
-    int type = responseType.getCode();
-    return new RestResponse.Builder().withType(type)
-        .withTitle(ResponseType.fromCode(type).getMessage()).withMessage(message).build().toJson();
+  private JsonObject generateResponse(HttpStatusCode statusCode, ResponseUrn urn, String message) {
+    String type = urn.getUrn();
+    return new RestResponse.Builder()
+        .withType(type)
+        .withTitle(statusCode.getDescription())
+        .withMessage(message)
+        .build().toJson();
 
   }
 
@@ -351,7 +393,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     } catch (IllegalArgumentException ex) {
       response.putHeader(CONTENT_TYPE, APPLICATION_JSON)
           .setStatusCode(ResponseType.BadRequestData.getCode())
-          .end(generateResponse(ResponseType.BadRequestData, MSG_BAD_QUERY).toString());
+          .end(generateResponse(HttpStatusCode.BAD_REQUEST, INVALID_ATTR_PARAM).toString());
 
 
     }

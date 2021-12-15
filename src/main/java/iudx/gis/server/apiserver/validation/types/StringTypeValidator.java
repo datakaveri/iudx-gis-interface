@@ -1,5 +1,7 @@
 package iudx.gis.server.apiserver.validation.types;
 
+import iudx.gis.server.apiserver.exceptions.DxRuntimeException;
+import iudx.gis.server.apiserver.response.ResponseUrn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,24 +19,25 @@ public class StringTypeValidator implements Validator {
 
   @Override
   public boolean isValid() {
+    String errorMessage = "";
     LOGGER.debug("value : " + value + "required : " + required);
     if (required && (value == null || value.isBlank())) {
-      LOGGER.error("Validation error : null or blank value for required mandatory field");
-      return false;
+      errorMessage = "Validation error : null or blank value for required mandatory field";
     } else {
       if (value == null) {
         return true;
       }
       if (value.isBlank()) {
-        LOGGER.error("Validation error :  blank value for passed");
-        return false;
+        errorMessage = "Validation error :  blank value for passed";
       }
     }
-    if (value.length() > 100) {
-      LOGGER.error("Validation error : length >100 not allowed");
-      return false;
+    if (value!=null && value.length() > 100) {
+      errorMessage = "Validation error : length >100 not allowed";
     }
-    return true;
+    if (errorMessage.isEmpty()) {
+      return true;
+    }
+    throw new DxRuntimeException(failureCode(), ResponseUrn.INVALID_PAYLOAD_FORMAT, errorMessage);
   }
 
   @Override

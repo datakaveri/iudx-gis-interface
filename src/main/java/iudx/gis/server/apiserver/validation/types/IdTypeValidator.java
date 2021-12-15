@@ -1,5 +1,7 @@
 package iudx.gis.server.apiserver.validation.types;
 
+import iudx.gis.server.apiserver.exceptions.DxRuntimeException;
+import iudx.gis.server.apiserver.response.ResponseUrn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,27 +32,27 @@ public class IdTypeValidator implements Validator {
   @Override
   public boolean isValid() {
     LOGGER.debug("value : " + value + "required : " + required);
+    String errorMessage = "";
     if (required && (value == null || value.isBlank())) {
-      LOGGER.error("Validation error : null or blank value for required mandatory field");
-      return false;
+      errorMessage = "Validation error : null or blank value for required mandatory field";
     } else {
       if (value == null) {
         return true;
       }
       if (value.isBlank()) {
-        LOGGER.error("Validation error :  blank value for passed");
-        return false;
+        errorMessage = "Validation error :  blank value for passed";
       }
     }
-    if (value.length() > maxLength) {
-      LOGGER.error("Validation error : Value exceed max character limit.");
-      return false;
+    if (value!=null && value.length() > maxLength) {
+      errorMessage = "Validation error : Value exceed max character limit";
     }
     if (!isvalidIUDXId(value)) {
-      LOGGER.error("Validation error : Invalid id.");
-      return false;
+      errorMessage = "Validation error : Invalid id";
     }
-    return true;
+    if (errorMessage.isBlank()) {
+      return true;
+    }
+    throw new DxRuntimeException(failureCode(), ResponseUrn.INVALID_PAYLOAD_FORMAT, errorMessage);
   }
 
   @Override

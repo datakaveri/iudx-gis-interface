@@ -60,6 +60,7 @@ public class Constants {
   public static final String APPLICATION_JSON = "application/json";
 
   // json fields
+  public static final String ERROR_MESSAGE = "errorMessage";
   public static final String JSON_INSTANCEID = "instanceID";
   public static final String JSON_TYPE = "type";
   public static final String JSON_DOMAIN = "domain";

@@ -47,10 +47,17 @@ public class ValidatorsHandlersFactory {
       case ADMIN_CRUD_PATH:
         getAdminCrudPathValidations(vertx, body, validator);
         break;
+      case ADMIN_CRUD_PATH_DELETE:
+        getAdminCrudPathDeleteValidations(parameters, validator);
+        break;
       default:
         break;
     }
     return validator;
+  }
+
+  private void getAdminCrudPathDeleteValidations(MultiMap parameters, List<Validator> validator) {
+    validator.add(new IdTypeValidator(parameters.get("id"), true));
   }
 
   private void getAdminCrudPathValidations(Vertx vertx, JsonObject body, List<Validator> validator) {

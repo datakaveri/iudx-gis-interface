@@ -3,7 +3,9 @@ package iudx.gis.server.database.util;
 public class Constants {
 
   public static final String TYPE = "type";
+  public static final String TITLE = "title";
   public static final String SUCCESS = "success";
+  public static final String ERROR_MESSAGE = "errorMessage";
 
   public static final String ID = "id";
   public static final String SERVER_URL = "server-url";

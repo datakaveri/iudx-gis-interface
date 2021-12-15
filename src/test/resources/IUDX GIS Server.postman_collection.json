@@ -6,7 +6,35 @@
 	},
 	"item": [
 		{
-			"name": "200 (success) Valid Method, JSON object",
+			"name": "200 (Success) Valid Method, JSON object",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-point-of-interests/wifi\",\r\n    \"server-url\": \"localhost\",\r\n    \"server-port\": 1234,\r\n    \"isSecure\": true,\r\n    \"accessInfo\": {\r\n        \"username\": \"test\",\r\n        \"password\": \"test\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{host}}:{{port}}/{{admin_base_path}}",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{admin_base_path}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "409 (Conflict) Valid Method, Duplicate ID",
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -35,21 +63,9 @@
 		},
 		{
 			"name": "405 (Method Not Allowed), Invalid API method",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"a\": b\r\n}",
-					"options": {
-						"raw": {
-							"language": "text"
-						}
-					}
-				},
 				"url": {
 					"raw": "https://{{host}}:{{port}}/{{admin_base_path}}",
 					"protocol": "https",
@@ -71,7 +87,35 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"id\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-point-of-interests/wifi\",\r\n    \"server-url\": \"localhost\",\r\n    \"server-port\": 1234,\r\n    \"isSecure\": true\r\n}",
+					"raw": "{\r\n    \"id\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-point-of-interests/wifi\",\r\n    \"server-url\": \"localhost\",\r\n    \"server-port\": 1234,\r\n    \"isSecure\": true,\r\n    \"accessInfo\":{}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{host}}:{{port}}/{{admin_base_path}}",
+					"protocol": "https",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{admin_base_path}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "400 (Bad Request) Resoure Not Found",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-point-of-interests/wifi-test\",\r\n    \"server-url\": \"localhost\",\r\n    \"server-port\": 1234,\r\n    \"isSecure\": false\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

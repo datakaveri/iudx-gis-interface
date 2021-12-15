@@ -1,6 +1,13 @@
 package iudx.gis.server.database;
 
 import static iudx.gis.server.database.util.Constants.*;
+
+import iudx.gis.server.apiserver.ApiServerVerticle;
+import iudx.gis.server.apiserver.exceptions.DxRuntimeException;
+import iudx.gis.server.apiserver.response.ResponseUrn;
+import iudx.gis.server.apiserver.util.HttpStatusCode;
+import iudx.gis.server.database.util.Util;
+import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AsyncResult;
@@ -60,7 +67,8 @@ public class DatabaseServiceImpl implements DatabaseService {
       return this;
     }
 
-    String query = INSERT_ADMIN_DETAILS_QUERY.replace("$1", resourceId)
+    String selectQuery = SELECT_ADMIN_DETAILS_QUERY.replace("$1", resourceId);
+    String insertQuery = INSERT_ADMIN_DETAILS_QUERY.replace("$1", resourceId)
         .replace("$2", serverUrl)
         .replace("$3", serverPort.toString())
         .replace("$4", isSecure.toString());
@@ -69,19 +77,31 @@ public class DatabaseServiceImpl implements DatabaseService {
       JsonObject accessObject = accessInfo.get();
       String username = accessObject.getString(USERNAME);
       String password = accessObject.getString(PASSWORD);
-      query = query.replace("$5", username).replace("$6", password);
+      insertQuery = insertQuery.replace("$5", username).replace("$6", password);
     } else {
-      query = query.replace("$5", "").replace("$6", "");
+      insertQuery = insertQuery.replace("$5", "").replace("$6", "");
     }
 
-    pgSQLClient.executeAsync(query)
+    String finalInsertQuery = insertQuery;
+    pgSQLClient.executeAsync(selectQuery)
+        .compose(ar -> {
+          if (ar.size() >= 1) {
+            return Future.failedFuture(Util.getResponse(
+                HttpStatusCode.CONFLICT,
+                ResponseUrn.RESOURCE_ALREADY_EXISTS.getUrn(),
+                "Insert operation failed because given resource ID already exists in the DB")
+                .toString()
+            );
+          }
+          return pgSQLClient.executeAsync(finalInsertQuery);
+        })
         .onSuccess(ar -> {
           LOGGER.debug("Insert admin details operation successful");
           handler.handle(Future.succeededFuture(new JsonObject().put(TYPE, SUCCESS)));
         })
         .onFailure(ar -> {
           LOGGER.error("Insert admin operation failed due to: {}", ar.getLocalizedMessage());
-          handler.handle(Future.failedFuture(ar.getCause()));
+          handler.handle(Future.failedFuture(ar));
         });
 
     return this;
@@ -100,7 +120,8 @@ public class DatabaseServiceImpl implements DatabaseService {
       return this;
     }
 
-    String query = UPDATE_ADMIN_DETAILS_QUERY.replace("$1", serverUrl)
+    String searchQuery = SELECT_ADMIN_DETAILS_QUERY.replace("$1", resourceId);
+    String updateQuery = UPDATE_ADMIN_DETAILS_QUERY.replace("$1", serverUrl)
         .replace("$2", serverPort.toString())
         .replace("$3", isSecure.toString())
         .replace("$6", resourceId);
@@ -109,12 +130,24 @@ public class DatabaseServiceImpl implements DatabaseService {
       JsonObject accessObject = accessInfo.get();
       String username = accessObject.getString(USERNAME);
       String password = accessObject.getString(PASSWORD);
-      query = query.replace("$4", username).replace("$5", password);
+      updateQuery = updateQuery.replace("$4", username).replace("$5", password);
     } else {
-      query = query.replace("$4", "").replace("$5", "");
+      updateQuery = updateQuery.replace("$4", "").replace("$5", "");
     }
 
-    pgSQLClient.executeAsync(query)
+    String finalUpdateQuery = updateQuery;
+    pgSQLClient.executeAsync(searchQuery)
+        .compose(ar -> {
+          if (ar.size() < 1) {
+            return Future.failedFuture(Util.getResponse(
+                HttpStatusCode.BAD_REQUEST,
+                ResponseUrn.RESOURCE_NOT_FOUND.getUrn(),
+                "Update operation failed because passed resource ID does not exist in DB")
+                .toString()
+            );
+          }
+          return pgSQLClient.executeAsync(finalUpdateQuery);
+        })
         .onSuccess(ar -> {
           LOGGER.debug("Update admin details operation successful!");
           handler.handle(Future.succeededFuture(new JsonObject().put(TYPE, SUCCESS)));
@@ -135,7 +168,12 @@ public class DatabaseServiceImpl implements DatabaseService {
     pgSQLClient.executeAsync(searchQuery)
         .compose(ar -> {
           if (ar.size() < 1) {
-            return Future.failedFuture("Given resource ID does not exist in DB");
+            return Future.failedFuture(Util.getResponse(
+                HttpStatusCode.BAD_REQUEST,
+                ResponseUrn.RESOURCE_NOT_FOUND.getUrn(),
+                "Given resource ID does not exist in DB")
+                .toString()
+            );
           }
           return pgSQLClient.executeAsync(deleteQuery);
         })
@@ -194,16 +232,20 @@ public class DatabaseServiceImpl implements DatabaseService {
       JsonObject accessObject = accessInfo.get();
       String username = accessObject.getString(USERNAME);
       String password = accessObject.getString(PASSWORD);
-      if (!username.isEmpty() && !password.isEmpty()) {
-        return false;
+      if (username==null || username.isEmpty() || password==null || password.isEmpty()) {
+        errorMessage = "Username and Password cannot be empty fields";
       } else {
-        errorMessage = "'Username and Password cannot be empty fields'";
+        return false;
       }
     } else {
-      errorMessage = "'Access Info cannot be an empty object'";
+      errorMessage = "Access Info cannot be an empty object";
     }
-    handler.handle(Future.failedFuture("Json Schema validation failed because " + errorMessage));
+    handler.handle(Future.failedFuture(Util.getResponse(
+        HttpStatusCode.BAD_REQUEST,
+        ResponseUrn.INVALID_PAYLOAD_FORMAT.getUrn(),
+        errorMessage)
+        .toString()
+    ));
     return true;
   }
-
 }
