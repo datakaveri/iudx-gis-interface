@@ -286,6 +286,8 @@
 									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/services/io.vertx.core.spi.VerticleFactory
 									</resource>
+									<resource>META-INF/services/io.vertx.core.spi.VertxServiceProvider
+									</resource>
 								</transformer>
 							</transformers>
 							<artifactSet></artifactSet>
@@ -321,6 +323,8 @@
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/services/io.vertx.core.spi.VerticleFactory
+									</resource>
+									<resource>META-INF/services/io.vertx.core.spi.VertxServiceProvider
 									</resource>
 								</transformer>
 							</transformers>
