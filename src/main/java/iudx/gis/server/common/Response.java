@@ -15,6 +15,14 @@ import io.vertx.core.json.JsonObject;
  */
 public class Response {
 
+  public int getStatus() {
+    return status;
+  }
+
+  public String getDetail() {
+    return detail;
+  }
+
   private final String type;
   private final int status;
   private final String title;
