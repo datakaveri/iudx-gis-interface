@@ -36,7 +36,6 @@ public class Configuration {
       Buffer buff = fileSystem.readFileBlocking(CONFIG_PATH);
       JsonArray conf = buff.toJsonObject().getJsonArray("modules");
       moduleConf = conf.getJsonObject(moduleIndex);
-      moduleConf.put("host", buff.toJsonObject().getString("host"));
 
     } else {
       LOGGER.fatal("Couldn't read configuration file; Path: " + CONFIG_PATH);

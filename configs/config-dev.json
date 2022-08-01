@@ -20,10 +20,8 @@
       "verticleInstances": 1,
       "audience": "",
       "authServerHost": "",
-      "host": "",
       "catServerHost": "",
       "catServerPort": 0,
-      "serverMode": "",
       "jwtIgnoreExpiry": true
     },
     {
