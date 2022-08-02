@@ -193,11 +193,9 @@ In order to connect to the DX catalogue server, required information such as cat
     "id": "iudx.gis.server.authenticator.AuthenticationVerticle",
     "verticleInstances": <number-of-verticle-instances,
     "audience": <gis-server-host>,
-    "host": <host>,
     "authServerHost": <auth-server-host>,
     "catServerHost": <catalogue-server-host>,
     "catServerPort": <catalogue-server-port>,
-    "serverMode": <server-mode>,
     "jwtIgnoreExpiry": <true | false>
 }
 ```
@@ -224,11 +222,9 @@ In order to connect to the DX authentication server, required information such a
    "id": "iudx.gis.server.authenticator.AuthenticationVerticle",
    "verticleInstances": <number-of-verticle-instances,
    "audience": <gis-server-host>,
-   "host": <host>,
    "authServerHost": <auth-server-host>,
    "catServerHost": <catalogue-server-host>,
    "catServerPort": <catalogue-server-port>,
-   "serverMode": <server-mode>,
    "jwtIgnoreExpiry": <true | false>
 }
 ```
