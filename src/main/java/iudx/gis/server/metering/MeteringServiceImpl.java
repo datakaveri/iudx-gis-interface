@@ -19,7 +19,7 @@ public class MeteringServiceImpl implements MeteringService {
 
   private static final Logger LOGGER = LogManager.getLogger(MeteringServiceImpl.class);
   private final QueryBuilder queryBuilder = new QueryBuilder();
-  private final DataBrokerService dataBrokerService;
+  public static DataBrokerService dataBrokerService;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public MeteringServiceImpl(DataBrokerService dataBrokerService) {
