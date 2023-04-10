@@ -1,3 +1,4 @@
+# This github workflow will automatically update docker image tags of gis-depl in the datakaveri/iudx-deployment repository files, whenever docker image is pushed to ghcr.io/datakaveri/gis-depl .Based on tag it will update the master/latest branch (if its 5.0.0-alpha-) or 4.5.0 stable branch (if its 4.5.0-)
 name: Update GIS docker image tags
 
 # This trigger will run the workflow whenever a new package is published to the registry
@@ -44,16 +45,16 @@ jobs:
         then
          git checkout -b gis-4.5.0-automatic-updates/$newtag4_5_0
 
-         # Uses sed to find and replace $oldtag4_5_0 with $newtag4_5_0 in Docker-Swarm-deployment/single-node/auth/auth-stack.yaml file
+         # Uses sed to find and replace $oldtag4_5_0 with $newtag4_5_0 in Docker-Swarm-deployment/single-node/gis/gis-stack.yaml file
          sed -i s/$oldtag4_5_0/$newtag4_5_0/g Docker-Swarm-deployment/single-node/gis/gis-stack.yaml
 
-         # Exports the current version of the application from K8s-deployment/Charts/auth-server/Chart.yaml file
+         # Exports the current version of the application from K8s-deployment/Charts/gis-interface/Chart.yaml file
          export oldappversion=`yq -r .version K8s-deployment/Charts/gis-interface/Chart.yaml`
 
-         # Uses awk to increment the version number in K8s-deployment/Charts/auth-server/Chart.yaml file
+         # Uses awk to increment the version number in K8s-deployment/Charts/gis-server/Chart.yaml file
          export newappversion=`yq -r .version K8s-deployment/Charts/gis-interface/Chart.yaml | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}' `
          
-         # Uses sed to find and replace $oldappversion with $newappversion in K8s-deployment/Charts/auth-server/Chart.yaml and K8s-deployment/Charts/auth-server/values.yaml files
+         # Uses sed to find and replace $oldappversion with $newappversion in K8s-deployment/Charts/gis-interface/Chart.yaml and K8s-deployment/Charts/gis-interface/values.yaml files
          sed -i s/$oldappversion/$newappversion/g K8s-deployment/Charts/gis-interface/Chart.yaml
          sed -i s/$oldtag4_5_0/$newtag4_5_0/g K8s-deployment/Charts/gis-interface/values.yaml
          git add Docker-Swarm-deployment/single-node/gis/gis-stack.yaml K8s-deployment/Charts/gis-interface/values.yaml K8s-deployment/Charts/gis-interface/Chart.yaml
@@ -69,20 +70,20 @@ jobs:
          git checkout master
          git checkout -b gis-automatic-updates/$newtag5_0_0
          
-         # Uses sed to find and replace $oldtag5_0_0 with $newtag5_0_0 in Docker-Swarm-deployment/single-node/auth/auth-stack.yaml file
+         # Uses sed to find and replace $oldtag5_0_0 with $newtag5_0_0 in Docker-Swarm-deployment/single-node/gis/gis-stack.yaml file
          sed -i s/$oldtag5_0_0/$newtag5_0_0/g Docker-Swarm-deployment/single-node/gis/gis-stack.yaml
 
-         # Exports the current version of the application from K8s-deployment/Charts/auth-server/Chart.yaml file
+         # Exports the current version of the application from K8s-deployment/Charts/gis-interface/Chart.yaml file
          export oldappversion=`yq -r .version K8s-deployment/Charts/gis-interface/Chart.yaml`
 
-         # Uses sed to find and replace $oldappversion with $newappversion in K8s-deployment/Charts/auth-server/Chart.yaml and K8s-deployment/Charts/auth-server/values.yaml files
+         # Uses sed to find and replace $oldappversion with $newappversion in K8s-deployment/Charts/gis-interface/Chart.yaml and K8s-deployment/Charts/gis-interface/values.yaml files
          export newappversion=`yq -r .version K8s-deployment/Charts/gis-interface/Chart.yaml | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}' `
          sed -i s/$oldappversion/$newappversion/g K8s-deployment/Charts/gis-interface/Chart.yaml
          sed -i s/$oldtag5_0_0/$newtag5_0_0/g K8s-deployment/Charts/gis-interface/values.yaml
          git add Docker-Swarm-deployment/single-node/gis/gis-stack.yaml K8s-deployment/Charts/gis-interface/values.yaml K8s-deployment/Charts/gis-interface/Chart.yaml
          git commit --allow-empty -m "updated GIS docker image tag to $newtag5_0_0"
          git push --set-upstream origin gis-automatic-updates/$newtag5_0_0
-         # Creates a new pull request on the datakaveri/iudx-deployment repository with the base branch mater
+         # Creates a new pull request on the datakaveri/iudx-deployment repository with the base branch master
          gh pr create -R datakaveri/iudx-deployment --base master --fill 
         fi
 
