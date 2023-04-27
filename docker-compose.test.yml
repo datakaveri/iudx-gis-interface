@@ -17,6 +17,8 @@ services:
       - /home/ubuntu/configs/keystore-gis.jks:/usr/share/app/configs/keystore.jks
       - ./docker/runTests.sh:/usr/share/app/docker/runTests.sh
       - ./src/:/usr/share/app/src
+      - ./iudx-pmd-ruleset.xml:/usr/share/app/iudx-pmd-ruleset.xml
+      - ./google_checks.xml:/usr/share/app/google_checks.xml
       - ${WORKSPACE}:/tmp/test
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: host

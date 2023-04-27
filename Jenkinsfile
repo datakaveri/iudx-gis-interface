@@ -37,6 +37,10 @@ pipeline {
         jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'iudx/gis/server/apiserver/*.class,**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/gis/server/deploy/*.class,iudx/gis/server/databroker/DataBrokerService.class,iudx/gis/server/databroker/DataBrokerServiceImpl.class,iudx/gis/server/apiserver/validation/types/Validator.class,iudx/gis/server/metering/MeteringService.class,iudx/gis/server/cache/CacheService.class,iudx/gis/server/database/postgres/PostgresService.class,**/*JwtDataConverter.class'
       }
       post{
+      always {
+               recordIssues enabledForFailure: true, tool: checkStyle(pattern: 'target/checkstyle-result.xml')
+               recordIssues enabledForFailure: true, tool: pmdParser(pattern: 'target/pmd.xml')
+             }
         failure{
           script{
             sh 'docker compose -f docker-compose.test.yml down --remove-orphans'
