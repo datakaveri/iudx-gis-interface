@@ -52,7 +52,6 @@ public class ValidationFailureHandler implements Handler<RoutingContext> {
           .end( validationFailureResponse().toString());
     }
     context.next();
-    return;
   }
 
   private JsonObject validationFailureResponse() {

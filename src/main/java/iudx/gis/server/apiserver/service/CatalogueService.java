@@ -26,23 +26,18 @@ public class CatalogueService {
   private static final Logger LOGGER = LogManager.getLogger(CatalogueService.class);
 
   public static WebClient catWebClient;
-  private long cacheGroupTimerId;
-  private long cacheResTimerId;
   private static String catHost;
   private static int catPort;
   private static String catSearchPath;
   private static String catItemPath;
   private String catBasePath;
-  private Vertx vertx;
-
-  private final Cache<String, String> idCache = CacheBuilder.newBuilder().maximumSize(1000)
-      .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES).build();
+  /*private final Cache<String, String> idCache = CacheBuilder.newBuilder().maximumSize(1000)
+      .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES).build();*/
 
   private final Cache<String, String> groupCache = CacheBuilder.newBuilder().maximumSize(1000)
       .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES).build();
 
   public CatalogueService(Vertx vertx, JsonObject config) {
-    this.vertx = vertx;
     catHost = config.getString("catServerHost");
     catPort = config.getInteger("catServerPort");
     catBasePath = config.getString("dxCatalogueBasePath");
@@ -58,11 +53,11 @@ public class CatalogueService {
     //populateGroupCache(catWebClient).onComplete(handler -> populateResourceCache(catWebClient));
     populateGroupCache(catWebClient);
 
-    cacheGroupTimerId = vertx.setPeriodic(TimeUnit.DAYS.toMillis(1), handler -> {
+    vertx.setPeriodic(TimeUnit.DAYS.toMillis(1), handler -> {
      populateGroupCache(catWebClient);
     });
 
-   cacheResTimerId = vertx.setPeriodic(TimeUnit.DAYS.toMillis(1), handler -> {
+    vertx.setPeriodic(TimeUnit.DAYS.toMillis(1), handler -> {
     populateResourceCache(catWebClient);
    });
   }
@@ -99,9 +94,9 @@ public class CatalogueService {
           if (handler.succeeded()) {
             JsonArray response = handler.result().bodyAsJsonObject().getJsonArray("results");
             response.forEach(json -> {
-              JsonObject res = (JsonObject) json;
-              String id = res.getString("id");
-              String groupId = id.substring(0, id.lastIndexOf("/"));
+              //JsonObject res = (JsonObject) json;
+              //String id = res.getString("id");
+              //String groupId = id.substring(0, id.lastIndexOf("/"));
               //idCache.put(id, res.getString("accessPolicy", groupCache.getIfPresent(groupId)));
             });
             promise.complete(true);

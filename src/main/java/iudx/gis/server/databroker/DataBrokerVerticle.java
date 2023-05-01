@@ -33,7 +33,6 @@ public class DataBrokerVerticle extends AbstractVerticle {
   private String virtualHost;
 
   private ServiceBinder binder;
-  private MessageConsumer<JsonObject> consumer;
 
   @Override
   public void start() throws Exception {
@@ -68,8 +67,7 @@ public class DataBrokerVerticle extends AbstractVerticle {
     client = RabbitMQClient.create(vertx, config);
     databroker = new DataBrokerServiceImpl(client);
     binder = new ServiceBinder(vertx);
-    consumer =
-        binder.setAddress(DATABROKER_SERVICE_ADDRESS).register(DataBrokerService.class, databroker);
+    binder.setAddress(DATABROKER_SERVICE_ADDRESS).register(DataBrokerService.class, databroker);
 
     LOGGER.info("Data-broker verticle started.");
   }

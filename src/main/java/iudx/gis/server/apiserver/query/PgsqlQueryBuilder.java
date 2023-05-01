@@ -66,7 +66,7 @@ public class PgsqlQueryBuilder {
       String password = accessObject.getString(PASSWORD);
       String tokenUrl = accessObject.getString(TOKEN_URL);
       updateQuery =
-          updateQuery.replace("$4", username).replace("$5", password).replace("$7", tokenUrl);;
+          updateQuery.replace("$4", username).replace("$5", password).replace("$7", tokenUrl);
     } else {
       updateQuery = updateQuery.replace("$4", "").replace("$5", "").replace("$7", "");
     }

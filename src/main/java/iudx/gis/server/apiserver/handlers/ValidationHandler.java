@@ -45,7 +45,6 @@ public class ValidationHandler implements Handler<RoutingContext> {
      validator.isValid();
     }
     context.next();
-    return;
   }
 
 }

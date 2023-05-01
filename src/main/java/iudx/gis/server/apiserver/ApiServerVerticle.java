@@ -66,15 +66,10 @@ public class ApiServerVerticle extends AbstractVerticle {
   private boolean isSSL;
   private String keystore;
   private String keystorePassword;
-  private CatalogueService catalogueService;
-  private MeteringService meteringService;
   // private DatabaseService database;
   private PostgresService postgresService;
-  private AuthenticationService authenticator;
   public String dxApiBasePath;
   public String adminBasePath;
-  private String dxCatalogueBasePath;
-  private String dxAuthBasePath;
 
   @Override
   public void start() throws Exception {
@@ -96,8 +91,8 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     dxApiBasePath = config().getString("dxApiBasePath");
     adminBasePath = config().getString("adminBasePath");
-    dxCatalogueBasePath = config().getString("dxCatalogueBasePath");
-    dxAuthBasePath = config().getString("dxAuthBasePath");
+    config().getString("dxCatalogueBasePath");
+    config().getString("dxAuthBasePath");
     Api api = Api.getInstance(dxApiBasePath,adminBasePath);
 
     router = Router.router(vertx);
@@ -160,8 +155,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     server.requestHandler(router).listen(port);
 
     /* Get a handler for the Service Discovery interface. */
-    authenticator = AuthenticationService.createProxy(vertx, AUTHENTICATION_SERVICE_ADDRESS);
-    meteringService = MeteringService.createProxy(vertx, METERING_SERVICE_ADDRESS);
+    AuthenticationService.createProxy(vertx, AUTHENTICATION_SERVICE_ADDRESS);
+    MeteringService.createProxy(vertx, METERING_SERVICE_ADDRESS);
     postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
 
     ValidationHandler entityQueryValidationHandler =
@@ -231,7 +226,7 @@ public class ApiServerVerticle extends AbstractVerticle {
                   .end(generateResponse(HttpStatusCode.NOT_FOUND, YET_NOT_IMPLEMENTED));
             });
 
-    catalogueService = new CatalogueService(vertx, config());
+    new CatalogueService(vertx, config());
 
     /* Print the deployed endpoints */
     printDeployedEndpoints(router);
@@ -347,7 +342,6 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void handleEntitiesQuery(RoutingContext routingContext) {
     LOGGER.trace("Info:handleEntitiesQuery method started.;");
     /* Handles HTTP request from client */
-    JsonObject authInfo = (JsonObject) routingContext.data().get("authInfo");
     HttpServerRequest request = routingContext.request();
     /* Handles HTTP response from server to client */
     HttpServerResponse response = routingContext.response();
@@ -442,36 +436,4 @@ public class ApiServerVerticle extends AbstractVerticle {
         .toString();
   }
 
-
-  private Future<Void> updateAuditTable(RoutingContext context) {
-    Promise<Void> promise = Promise.promise();
-    JsonObject authInfo = (JsonObject) context.data().get("authInfo");
-
-    ZonedDateTime zst = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
-    long time = zst.toInstant().toEpochMilli();
-    String isoTime = zst.truncatedTo(ChronoUnit.SECONDS).toString();
-
-    JsonObject request = new JsonObject();
-    request.put(EPOCH_TIME, time);
-    request.put(ISO_TIME, isoTime);
-    request.put(USER_ID, authInfo.getValue(USER_ID));
-    request.put(IID,authInfo.getValue(IID));
-    request.put(ID, authInfo.getValue(ID));
-    request.put(API, authInfo.getValue(API_ENDPOINT));
-    request.put(RESPONSE_SIZE, context.data().get(RESPONSE_SIZE));
-
-    meteringService.insertMeteringValuesInRMQ(
-        request,
-        handler -> {
-          if (handler.succeeded()) {
-            LOGGER.debug("inserted into rmq");
-            promise.complete();
-          } else {
-            LOGGER.error("failed to insert into rmq "+handler.result());
-            promise.complete();
-          }
-        });
-
-    return promise.future();
-  }
 }

@@ -56,13 +56,13 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
   public Cache<String, String> resourceIdCache =
       CacheBuilder.newBuilder()
           .maximumSize(1000)
-          .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES)
+          .expireAfterAccess(CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES)
           .build();
   // resourceGroupCache will contain ACL info about all resource group in a resource server
   Cache<String, String> resourceGroupCache =
       CacheBuilder.newBuilder()
           .maximumSize(1000)
-          .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES)
+          .expireAfterAccess(CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES)
           .build();
 
   public JwtAuthenticationServiceImpl(
@@ -257,9 +257,9 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
         jsonResponse.put(JSON_IID, jwtId);
         jsonResponse.put(
             JSON_EXPIRY,
-            (LocalDateTime.ofInstant(
+            LocalDateTime.ofInstant(
                     Instant.ofEpochSecond(Long.parseLong(jwtData.getExp().toString())),
-                    ZoneId.systemDefault()))
+                    ZoneId.systemDefault())
                 .toString());
         promise.complete(jsonResponse);
       } else {
@@ -410,8 +410,8 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
 
             LocalDateTime revokedAt = LocalDateTime.parse(timestamp);
             LocalDateTime jwtIssuedAt =
-                (LocalDateTime.ofInstant(
-                    Instant.ofEpochSecond(jwtData.getIat()), ZoneId.systemDefault()));
+                LocalDateTime.ofInstant(
+                    Instant.ofEpochSecond(jwtData.getIat()), ZoneId.systemDefault());
 
             if (jwtIssuedAt.isBefore(revokedAt)) {
               LOGGER.error("Privileges for client are revoked.");
