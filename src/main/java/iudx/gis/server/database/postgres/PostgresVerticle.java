@@ -1,8 +1,7 @@
 package iudx.gis.server.database.postgres;
 
 import static iudx.gis.server.common.Constants.PG_SERVICE_ADDRESS;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
@@ -10,6 +9,8 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PostgresVerticle extends AbstractVerticle {
 
@@ -21,7 +22,7 @@ public class PostgresVerticle extends AbstractVerticle {
   private PgConnectOptions connectOptions;
   private PoolOptions poolOptions;
   private PgPool pool;
-  private String databaseIP;
+  private String databaseIp;
   private int databasePort;
   private String databaseName;
   private String databaseUserName;
@@ -33,7 +34,7 @@ public class PostgresVerticle extends AbstractVerticle {
   @Override
   public void start() throws Exception {
 
-    databaseIP = config().getString("databaseIp");
+    databaseIp = config().getString("databaseIp");
     databasePort = config().getInteger("databasePort");
     databaseName = config().getString("databaseName");
     databaseUserName = config().getString("databaseUserName");
@@ -42,7 +43,7 @@ public class PostgresVerticle extends AbstractVerticle {
     this.connectOptions =
         new PgConnectOptions()
             .setPort(databasePort)
-            .setHost(databaseIP)
+            .setHost(databaseIp)
             .setDatabase(databaseName)
             .setUser(databaseUserName)
             .setPassword(databasePassword)
@@ -57,7 +58,6 @@ public class PostgresVerticle extends AbstractVerticle {
 
     pgService = new PostgresServiceImpl(this.pool);
 
-
     consumer = binder.setAddress(PG_SERVICE_ADDRESS).register(PostgresService.class, pgService);
     LOGGER.info("Postgres verticle started.");
   }
@@ -66,5 +66,4 @@ public class PostgresVerticle extends AbstractVerticle {
   public void stop() {
     binder.unregister(consumer);
   }
-
 }

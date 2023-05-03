@@ -1,4 +1,4 @@
-package iudx.gis.server.cache.cacheImpl;
+package iudx.gis.server.cache.cacheimpl;
 
 public interface IudxCache {
 

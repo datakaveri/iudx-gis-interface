@@ -1,4 +1,4 @@
-package iudx.gis.server.cache.cacheImpl;
+package iudx.gis.server.cache.cacheimpl;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

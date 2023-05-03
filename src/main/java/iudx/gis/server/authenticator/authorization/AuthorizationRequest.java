@@ -2,7 +2,6 @@ package iudx.gis.server.authenticator.authorization;
 
 public final class AuthorizationRequest {
 
-
   private final Method method;
   private final String api;
 
@@ -30,19 +29,22 @@ public final class AuthorizationRequest {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     AuthorizationRequest other = (AuthorizationRequest) obj;
-    if (!api.equals(other.api))
+    if (!api.equals(other.api)) {
       return false;
-    if (method != other.method)
+    }
+    if (method != other.method) {
       return false;
+    }
     return true;
   }
-
-
 }

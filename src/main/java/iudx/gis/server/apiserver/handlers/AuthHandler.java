@@ -21,16 +21,16 @@ public class AuthHandler implements Handler<RoutingContext> {
   private static final String AUTH_SERVICE_ADDRESS = "iudx.gis.authentication.service";
   private static final Logger LOGGER = LogManager.getLogger(AuthHandler.class);
   static AuthenticationService authenticator;
-  private HttpServerRequest request;
   private static String dxApiBasePath;
   private static String adminBasePath;
   private static Api api;
+  private HttpServerRequest request;
 
   public static AuthHandler create(Vertx vertx, JsonObject config) {
     authenticator = AuthenticationService.createProxy(vertx, AUTH_SERVICE_ADDRESS);
     dxApiBasePath = config.getString("dxApiBasePath");
     adminBasePath = config.getString("adminBasePath");
-    api = Api.getInstance(dxApiBasePath,adminBasePath);
+    api = Api.getInstance(dxApiBasePath, adminBasePath);
     return new AuthHandler();
   }
 
@@ -50,7 +50,9 @@ public class AuthHandler implements Handler<RoutingContext> {
     final String path = getNormalizedPath(request.path());
     final String method = context.request().method().toString();
 
-    if (token == null) token = "public";
+    if (token == null) {
+      token = "public";
+    }
 
     String paramId = getId4rmRequest();
 
@@ -108,11 +110,13 @@ public class AuthHandler implements Handler<RoutingContext> {
   public String getNormalizedPath(String url) {
     LOGGER.debug("URL : {}", url);
     String path = null;
-    if (url.matches(api.getEntitiesEndpoint())) path =  api.getEntitiesEndpoint();
-    else if (url.matches(api.getAdminPath())) path = api.getAdminPath();
+    if (url.matches(api.getEntitiesEndpoint())) {
+      path = api.getEntitiesEndpoint();
+    } else if (url.matches(api.getAdminPath())) {
+      path = api.getAdminPath();
+    }
     return path;
   }
-
 
   private String getId4rmRequest() {
     return request.getParam(ID);

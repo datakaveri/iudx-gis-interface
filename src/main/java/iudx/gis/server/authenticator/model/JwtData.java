@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject;
 @DataObject(generateConverter = true, publicConverter = false)
 public final class JwtData {
 
-  private String access_token;
+  private String accessToken;
   private String sub;
   private String iss;
   private String aud;
@@ -16,26 +16,27 @@ public final class JwtData {
   private String role;
   private JsonObject cons;
 
-  public JsonObject toJson() {
-    JsonObject json = new JsonObject();
-    JwtDataConverter.toJson(this, json);
-    return json;
-  }
-
   public JwtData() {
     super();
   }
 
   public JwtData(JsonObject json) {
     JwtDataConverter.fromJson(json, this);
+    setAccessToken(json.getString("access_token"));
   }
 
-  public String getAccess_token() {
-    return access_token;
+  public JsonObject toJson() {
+    JsonObject json = new JsonObject();
+    JwtDataConverter.toJson(this, json);
+    return json;
   }
 
-  public void setAccess_token(String access_token) {
-    this.access_token = access_token;
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  public void setAccessToken(String accessToken) {
+    this.accessToken = accessToken;
   }
 
   public String getSub() {
@@ -104,12 +105,24 @@ public final class JwtData {
 
   @Override
   public String toString() {
-    return "JwtData [access_token=" + access_token + ", sub=" + sub + ", iss=" + iss + ", aud=" + aud + ", exp=" + exp
-        + ", iat=" + iat + ", iid=" + iid + ", role=" + role + ", cons=" + cons + "]";
+    return "JwtData [access_token="
+        + accessToken
+        + ", sub="
+        + sub
+        + ", iss="
+        + iss
+        + ", aud="
+        + aud
+        + ", exp="
+        + exp
+        + ", iat="
+        + iat
+        + ", iid="
+        + iid
+        + ", role="
+        + role
+        + ", cons="
+        + cons
+        + "]";
   }
-
-  
-
-
-
 }

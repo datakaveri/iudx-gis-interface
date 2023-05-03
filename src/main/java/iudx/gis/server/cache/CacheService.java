@@ -30,7 +30,7 @@ public interface CacheService {
    * }
    * </pre>
    *
-   * in case of success method returns a value abstracted in json object else handler will fail.
+   * <p>in case of success method returns a value abstracted in json object else handler will fail.
    *
    * <pre>
    * {
@@ -40,7 +40,7 @@ public interface CacheService {
    *
    * @param request valid json request
    * @param handler handler
-   * @return
+   * @return CacheService
    */
   @Fluent
   CacheService get(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
@@ -58,7 +58,7 @@ public interface CacheService {
    * }
    * </pre>
    *
-   * in case of success a json object will be returned else handler will fail.
+   * <p>in case of success a json object will be returned else handler will fail.
    *
    * <pre>
    * {
@@ -66,13 +66,13 @@ public interface CacheService {
    * }
    * </pre>
    *
-   * @param request
-   * @param handler
+   * @param request JsonObject
+   * @param handler handler
    * @return in case of success a json object will be returned else handler will fail.
    *     <pre>
-   * {
-   *    "key":"value"
-   * }
+   *     {
+   *        "key":"value"
+   *     }
    *         </pre>
    */
   @Fluent
@@ -92,9 +92,9 @@ public interface CacheService {
    * }
    * </pre>
    *
-   * @param request
-   * @param handler
-   * @return
+   * @param request JsonObject
+   * @param handler handler
+   * @return CacheService
    */
   @Fluent
   CacheService refresh(JsonObject request, Handler<AsyncResult<JsonObject>> handler);

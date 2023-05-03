@@ -8,7 +8,6 @@ import static iudx.gis.server.apiserver.util.Constants.JSON_TYPE;
 import static iudx.gis.server.apiserver.util.Constants.MSG_BAD_QUERY;
 
 import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import iudx.gis.server.apiserver.exceptions.DxRuntimeException;
@@ -31,14 +30,16 @@ public class ValidationFailureHandler implements Handler<RoutingContext> {
       LOGGER.error(exception.getUrn().getUrn() + " : " + exception.getMessage());
       HttpStatusCode code = HttpStatusCode.getByValue(exception.getStatusCode());
 
-      JsonObject response = new RestResponse.Builder()
-          .withType(exception.getUrn().getUrn())
-          .withTitle(code.getDescription())
-          .withMessage(exception.getLocalizedMessage())
-          .build()
-          .toJson();
+      JsonObject response =
+          new RestResponse.Builder()
+              .withType(exception.getUrn().getUrn())
+              .withTitle(code.getDescription())
+              .withMessage(exception.getLocalizedMessage())
+              .build()
+              .toJson();
 
-      context.response()
+      context
+          .response()
           .putHeader(CONTENT_TYPE, APPLICATION_JSON)
           .setStatusCode(exception.getStatusCode())
           .end(response.toString());
@@ -46,10 +47,11 @@ public class ValidationFailureHandler implements Handler<RoutingContext> {
 
     if (failure instanceof RuntimeException) {
 
-      context.response()
+      context
+          .response()
           .putHeader(CONTENT_TYPE, APPLICATION_JSON)
           .setStatusCode(HttpStatus.SC_BAD_REQUEST)
-          .end( validationFailureResponse().toString());
+          .end(validationFailureResponse().toString());
     }
     context.next();
   }

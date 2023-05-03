@@ -1,5 +1,7 @@
 package iudx.gis.server.authenticator;
 
+import static iudx.gis.server.authenticator.Constants.*;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.vertx.core.AsyncResult;
@@ -23,19 +25,16 @@ import iudx.gis.server.authenticator.authorization.JwtAuthorization;
 import iudx.gis.server.authenticator.authorization.Method;
 import iudx.gis.server.authenticator.model.JwtData;
 import iudx.gis.server.cache.CacheService;
-import iudx.gis.server.cache.cacheImpl.CacheType;
+import iudx.gis.server.cache.cacheimpl.CacheType;
+import iudx.gis.server.common.Api;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-
-import iudx.gis.server.common.Api;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import static iudx.gis.server.authenticator.Constants.*;
 
 public class JwtAuthenticationServiceImpl implements AuthenticationService {
 
@@ -113,7 +112,7 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
                 }
               })
           .compose(revokeClientTokenHandler -> isValidIid(result.jwtData))
-          .compose(IdHandler -> isValidRole(result.jwtData))
+          .compose(idHandler -> isValidRole(result.jwtData))
           .onSuccess(successHandler -> handler.handle(Future.succeededFuture(successHandler)))
           .onFailure(
               failureHandler -> handler.handle(Future.failedFuture(failureHandler.getMessage())));
@@ -187,10 +186,10 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     LOGGER.trace("isOpenResource() started");
     Promise<String> promise = Promise.promise();
 
-    String ACL = resourceIdCache.getIfPresent(id);
-    if (ACL != null) {
+    String acl = resourceIdCache.getIfPresent(id);
+    if (acl != null) {
       LOGGER.debug("Cache Hit");
-      promise.complete(ACL);
+      promise.complete(acl);
     } else {
       // cache miss
       LOGGER.debug("Cache miss calling cat server");
@@ -204,8 +203,8 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
               : String.join("/", Arrays.copyOfRange(idComponents, 0, 4));
       // 1. check group accessPolicy.
       // 2. check resource exist, if exist set accessPolicy to group accessPolicy. else fail
-      Future<String> groupACLFuture = getGroupAccessPolicy(groupId);
-      groupACLFuture
+      Future<String> groupAclFuture = getGroupAccessPolicy(groupId);
+      groupAclFuture
           .compose(
               groupACLResult -> {
                 String groupPolicy = groupACLResult;
@@ -246,7 +245,7 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
       AuthorizationRequest authRequest = new AuthorizationRequest(method, apiEndpoint);
 
       IudxRole role = IudxRole.fromRole(jwtData.getRole());
-      AuthorizationStrategy authStrategy = AuthorizationContextFactory.create(role,api);
+      AuthorizationStrategy authStrategy = AuthorizationContextFactory.create(role, api);
       LOGGER.debug("strategy : " + authStrategy.getClass().getSimpleName());
       JwtAuthorization jwtAuthStrategy = new JwtAuthorization(authStrategy);
       LOGGER.debug("endPoint : " + authInfo.getString("apiEndpoint"));
@@ -276,10 +275,8 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
   }
 
   private boolean checkOpenEndPoints(String endPoint) {
-    for(String item : OPEN_ENDPOINTS)
-    {
-      if(endPoint.contains(item))
-      {
+    for (String item : OPEN_ENDPOINTS) {
+      if (endPoint.contains(item)) {
         return true;
       }
     }
@@ -353,7 +350,7 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     return promise.future();
   }
 
-   public Future<Boolean> isResourceExist(String id, String groupACL) {
+  public Future<Boolean> isResourceExist(String id, String groupAcl) {
     LOGGER.trace("isResourceExist() started");
     Promise<Boolean> promise = Promise.promise();
     String resourceExist = resourceIdCache.getIfPresent(id);
@@ -385,7 +382,7 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
                   promise.fail("Not Found");
                 } else {
                   LOGGER.debug("is Exist response : " + responseBody);
-                  resourceIdCache.put(id, groupACL);
+                  resourceIdCache.put(id, groupAcl);
                   promise.complete(true);
                 }
               });
@@ -432,10 +429,10 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
   public Future<String> getGroupAccessPolicy(String groupId) {
     LOGGER.trace("getGroupAccessPolicy() started");
     Promise<String> promise = Promise.promise();
-    String groupACL = resourceGroupCache.getIfPresent(groupId);
-    if (groupACL != null) {
+    String groupAcl = resourceGroupCache.getIfPresent(groupId);
+    if (groupAcl != null) {
       LOGGER.debug("Info : cache Hit");
-      promise.complete(groupACL);
+      promise.complete(groupAcl);
     } else {
       LOGGER.debug("Info : cache miss");
       catWebClient
@@ -461,16 +458,16 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
                   promise.fail("Resource not found");
                   return;
                 }
-                String resourceACL = "SECURE";
+                String resourceAcl = "SECURE";
                 try {
-                  resourceACL =
+                  resourceAcl =
                       responseBody
                           .getJsonArray("results")
                           .getJsonObject(0)
                           .getString("accessPolicy");
-                  resourceGroupCache.put(groupId, resourceACL);
+                  resourceGroupCache.put(groupId, resourceAcl);
                   LOGGER.debug("Info: Group ID valid : Catalogue item Found");
-                  promise.complete(resourceACL);
+                  promise.complete(resourceAcl);
                 } catch (Exception ignored) {
                   LOGGER.error(ignored.getMessage());
                   LOGGER.error("Info: Group ID invalid : Empty response in results from Catalogue");

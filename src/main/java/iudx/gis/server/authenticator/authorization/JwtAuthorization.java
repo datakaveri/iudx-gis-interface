@@ -1,8 +1,6 @@
 package iudx.gis.server.authenticator.authorization;
 
 import iudx.gis.server.authenticator.model.JwtData;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public final class JwtAuthorization {
   private final AuthorizationStrategy authStrategy;

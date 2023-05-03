@@ -12,13 +12,15 @@ import io.vertx.core.json.JsonObject;
 @VertxGen
 @ProxyGen
 public interface DataBrokerService {
-  @Fluent
-  DataBrokerService publishMessage(JsonObject body, String toExchange,
-                                   String routingKey,
-                                   Handler<AsyncResult<JsonObject>> handler);
   @GenIgnore
   static DataBrokerService createProxy(Vertx vertx, String address) {
     return new DataBrokerServiceVertxEBProxy(vertx, address);
   }
 
+  @Fluent
+  DataBrokerService publishMessage(
+      JsonObject body,
+      String toExchange,
+      String routingKey,
+      Handler<AsyncResult<JsonObject>> handler);
 }

@@ -1,14 +1,13 @@
 package iudx.gis.server.apiserver.validation.types;
 
 import static iudx.gis.server.apiserver.response.ResponseUrn.*;
-import io.vertx.json.schema.NoSyncValidationException;
-import io.vertx.json.schema.ValidationException;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.json.schema.Schema;
 import iudx.gis.server.apiserver.exceptions.DxRuntimeException;
 import iudx.gis.server.apiserver.util.HttpStatusCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import io.vertx.core.json.JsonObject;
-import io.vertx.json.schema.Schema;
 
 public final class JsonSchemaTypeValidator implements Validator {
 

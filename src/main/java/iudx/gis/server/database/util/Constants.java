@@ -6,7 +6,7 @@ public class Constants {
   public static final String TITLE = "title";
   public static final String SUCCESS = "Success";
   public static final String ERROR_MESSAGE = "errorMessage";
-  public static final String DETAIL="detail";
+  public static final String DETAIL = "detail";
 
   public static final String ID = "id";
   public static final String SERVER_URL = "server-url";
@@ -17,7 +17,4 @@ public class Constants {
   public static final String USERNAME = "username";
   public static final String PASSWORD = "password";
   public static final String TOKEN_URL = "tokenURL";
-
-
-  
 }

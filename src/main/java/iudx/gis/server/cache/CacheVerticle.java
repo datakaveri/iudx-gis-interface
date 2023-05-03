@@ -4,8 +4,6 @@ import static iudx.gis.server.common.Constants.CACHE_SERVICE_ADDRESS;
 import static iudx.gis.server.common.Constants.PG_SERVICE_ADDRESS;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.eventbus.MessageConsumer;
-import io.vertx.core.json.JsonObject;
 import io.vertx.serviceproxy.ServiceBinder;
 import iudx.gis.server.database.postgres.PostgresService;
 import org.apache.logging.log4j.LogManager;

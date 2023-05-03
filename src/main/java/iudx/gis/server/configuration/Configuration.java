@@ -1,27 +1,25 @@
 package iudx.gis.server.configuration;
 
-import java.io.File;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.io.File;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Configuration {
 
-  private static FileSystem fileSystem;
   private static final Logger LOGGER = LogManager.getLogger(Configuration.class);
   private static final String CONFIG_PATH = "./configs/config-test.json";
+  private static FileSystem fileSystem;
 
   /**
    * This is to read the config.json file from fileSystem to load configuration.
    *
-   * @param moduleIndex
-   * @param vertx
+   * @param moduleIndex Integer
+   * @param vertx Vertx
    * @return module JsonObject
    */
   public JsonObject configLoader(int moduleIndex, Vertx vertx) {
@@ -43,5 +41,4 @@ public class Configuration {
 
     return moduleConf;
   }
-
 }

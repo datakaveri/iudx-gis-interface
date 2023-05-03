@@ -9,8 +9,9 @@ import static iudx.gis.server.database.util.Constants.SERVER_PORT;
 import static iudx.gis.server.database.util.Constants.SERVER_URL;
 import static iudx.gis.server.database.util.Constants.TOKEN_URL;
 import static iudx.gis.server.database.util.Constants.USERNAME;
-import java.util.Optional;
+
 import io.vertx.core.json.JsonObject;
+import java.util.Optional;
 
 public class PgsqlQueryBuilder {
 
@@ -27,10 +28,12 @@ public class PgsqlQueryBuilder {
 
     Optional<JsonObject> accessInfo = Optional.ofNullable(queryParams.getJsonObject(ACCESS_INFO));
 
-    String insertQuery = INSERT_ADMIN_DETAILS_QUERY.replace("$1", resourceId)
-        .replace("$2", serverUrl)
-        .replace("$3", serverPort.toString())
-        .replace("$4", isSecure.toString());
+    String insertQuery =
+        INSERT_ADMIN_DETAILS_QUERY
+            .replace("$1", resourceId)
+            .replace("$2", serverUrl)
+            .replace("$3", serverPort.toString())
+            .replace("$4", isSecure.toString());
 
     if (accessInfo.isPresent() && !accessInfo.get().isEmpty()) {
       JsonObject accessObject = accessInfo.get();
@@ -55,10 +58,12 @@ public class PgsqlQueryBuilder {
 
     Optional<JsonObject> accessInfo = Optional.ofNullable(queryParams.getJsonObject(ACCESS_INFO));
 
-    String updateQuery=UPDATE_ADMIN_DETAILS_QUERY.replace("$1", serverUrl)
-        .replace("$2", serverPort.toString())
-        .replace("$3", isSecure.toString())
-        .replace("$6", resourceId);
+    String updateQuery =
+        UPDATE_ADMIN_DETAILS_QUERY
+            .replace("$1", serverUrl)
+            .replace("$2", serverPort.toString())
+            .replace("$3", isSecure.toString())
+            .replace("$6", resourceId);
 
     if (accessInfo.isPresent() && !accessInfo.get().isEmpty()) {
       JsonObject accessObject = accessInfo.get();
@@ -70,12 +75,11 @@ public class PgsqlQueryBuilder {
     } else {
       updateQuery = updateQuery.replace("$4", "").replace("$5", "").replace("$7", "");
     }
-    
+
     return updateQuery;
   }
-  
+
   public static String deleteAdminDetailsQuery(String resourceId) {
     return DELETE_ADMIN_DETAILS_QUERY.replace("$1", resourceId);
   }
-
 }
