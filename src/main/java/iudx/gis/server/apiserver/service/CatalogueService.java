@@ -1,5 +1,8 @@
 package iudx.gis.server.apiserver.service;
 
+import static iudx.gis.server.authenticator.Constants.CAT_ITEM_PATH;
+import static iudx.gis.server.authenticator.Constants.CAT_SEARCH_PATH;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.vertx.core.Future;
@@ -13,36 +16,28 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import iudx.gis.server.authenticator.Constants;
+import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static iudx.gis.server.authenticator.Constants.CAT_ITEM_PATH;
-import static iudx.gis.server.authenticator.Constants.CAT_SEARCH_PATH;
 
 public class CatalogueService {
   private static final Logger LOGGER = LogManager.getLogger(CatalogueService.class);
 
   public static WebClient catWebClient;
-  private long cacheGroupTimerId;
-  private long cacheResTimerId;
   private static String catHost;
   private static int catPort;
   private static String catSearchPath;
   private static String catItemPath;
+  private final Cache<String, String> groupCache =
+      CacheBuilder.newBuilder()
+          .maximumSize(1000)
+          .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES)
+          .build();
+  /*private final Cache<String, String> idCache = CacheBuilder.newBuilder().maximumSize(1000)
+  .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES).build();*/
   private String catBasePath;
-  private Vertx vertx;
-
-  private final Cache<String, String> idCache = CacheBuilder.newBuilder().maximumSize(1000)
-      .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES).build();
-
-  private final Cache<String, String> groupCache = CacheBuilder.newBuilder().maximumSize(1000)
-      .expireAfterAccess(Constants.CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES).build();
 
   public CatalogueService(Vertx vertx, JsonObject config) {
-    this.vertx = vertx;
     catHost = config.getString("catServerHost");
     catPort = config.getInteger("catServerPort");
     catBasePath = config.getString("dxCatalogueBasePath");
@@ -51,64 +46,80 @@ public class CatalogueService {
 
     WebClientOptions options =
         new WebClientOptions().setTrustAll(true).setVerifyHost(false).setSsl(true);
-    if (catWebClient==null) {
+    if (catWebClient == null) {
       catWebClient = WebClient.create(vertx, options);
     }
 
-    //populateGroupCache(catWebClient).onComplete(handler -> populateResourceCache(catWebClient));
+    // populateGroupCache(catWebClient).onComplete(handler -> populateResourceCache(catWebClient));
     populateGroupCache(catWebClient);
 
-    cacheGroupTimerId = vertx.setPeriodic(TimeUnit.DAYS.toMillis(1), handler -> {
-     populateGroupCache(catWebClient);
-    });
+    vertx.setPeriodic(
+        TimeUnit.DAYS.toMillis(1),
+        handler -> {
+          populateGroupCache(catWebClient);
+        });
 
-   cacheResTimerId = vertx.setPeriodic(TimeUnit.DAYS.toMillis(1), handler -> {
-    populateResourceCache(catWebClient);
-   });
+    vertx.setPeriodic(
+        TimeUnit.DAYS.toMillis(1),
+        handler -> {
+          populateResourceCache(catWebClient);
+        });
   }
 
   public Future<Boolean> populateGroupCache(WebClient client) {
     Promise<Boolean> promise = Promise.promise();
-    catWebClient.get(catPort, catHost, catSearchPath).addQueryParam("property", "[type]")
+    catWebClient
+        .get(catPort, catHost, catSearchPath)
+        .addQueryParam("property", "[type]")
         .addQueryParam("value", "[[iudx:ResourceGroup]]")
-        .addQueryParam("filter", "[accessPolicy,id]").expect(ResponsePredicate.JSON)
-        .send(handler -> {
-          if (handler.succeeded()) {
-            JsonArray response = handler.result().bodyAsJsonObject().getJsonArray("results");
-            response.forEach(json -> {
-              JsonObject res = (JsonObject) json;
-              String id = res.getString("id");
-              String[] idArray = id.split("/");
-              groupCache.put(id, res.getString("accessPolicy", "SECURE"));
+        .addQueryParam("filter", "[accessPolicy,id]")
+        .expect(ResponsePredicate.JSON)
+        .send(
+            handler -> {
+              if (handler.succeeded()) {
+                JsonArray response = handler.result().bodyAsJsonObject().getJsonArray("results");
+                response.forEach(
+                    json -> {
+                      JsonObject res = (JsonObject) json;
+                      String id = res.getString("id");
+                      String[] idArray = id.split("/");
+                      groupCache.put(id, res.getString("accessPolicy", "SECURE"));
+                    });
+                LOGGER.debug("Cache has been populated!");
+                LOGGER.debug(groupCache.size());
+                promise.complete(true);
+              } else if (handler.failed()) {
+                promise.fail(handler.cause());
+              }
             });
-            LOGGER.debug("Cache has been populated!"); 
-            LOGGER.debug(groupCache.size());
-            promise.complete(true);
-          } else if (handler.failed()) {
-            promise.fail(handler.cause());
-          }
-        });
     return promise.future();
   }
 
   public Future<Boolean> populateResourceCache(WebClient client) {
     Promise<Boolean> promise = Promise.promise();
-    catWebClient.get(catPort, catHost, catSearchPath).addQueryParam("property", "[type]")
-        .addQueryParam("value", "[[iudx:Resource]]").addQueryParam("filter", "[accessPolicy,id]")
-        .expect(ResponsePredicate.JSON).send(handler -> {
-          if (handler.succeeded()) {
-            JsonArray response = handler.result().bodyAsJsonObject().getJsonArray("results");
-            response.forEach(json -> {
-              JsonObject res = (JsonObject) json;
-              String id = res.getString("id");
-              String groupId = id.substring(0, id.lastIndexOf("/"));
-              //idCache.put(id, res.getString("accessPolicy", groupCache.getIfPresent(groupId)));
+    catWebClient
+        .get(catPort, catHost, catSearchPath)
+        .addQueryParam("property", "[type]")
+        .addQueryParam("value", "[[iudx:Resource]]")
+        .addQueryParam("filter", "[accessPolicy,id]")
+        .expect(ResponsePredicate.JSON)
+        .send(
+            handler -> {
+              if (handler.succeeded()) {
+                JsonArray response = handler.result().bodyAsJsonObject().getJsonArray("results");
+                response.forEach(
+                    json -> {
+                      // JsonObject res = (JsonObject) json;
+                      // String id = res.getString("id");
+                      // String groupId = id.substring(0, id.lastIndexOf("/"));
+                      // idCache.put(id, res.getString("accessPolicy",
+                      // groupCache.getIfPresent(groupId)));
+                    });
+                promise.complete(true);
+              } else if (handler.failed()) {
+                promise.fail(handler.cause());
+              }
             });
-            promise.complete(true);
-          } else if (handler.failed()) {
-            promise.fail(handler.cause());
-          }
-        });
     return promise.future();
   }
 
@@ -162,30 +173,35 @@ public class CatalogueService {
       return (List<T>) arr.getList();
     }
   }*/
-  
+
   public Future<Boolean> isItemExist(String id) {
     LOGGER.trace("isItemExist() started");
     Promise<Boolean> promise = Promise.promise();
-    catWebClient.get(catPort, catHost, catItemPath).addQueryParam("id", id)
-        .expect(ResponsePredicate.JSON).send(responseHandler -> {
-          if (responseHandler.succeeded()) {
-            HttpResponse<Buffer> response = responseHandler.result();
-            JsonObject responseBody = response.bodyAsJsonObject();
-            if (responseBody.getString("type").equalsIgnoreCase("urn:dx:cat:Success")
-                && responseBody.getInteger("totalHits") > 0) {
-              promise.complete(responseHandler.succeeded());
-              /*if(responseBody.getJsonArray("results").getJsonObject(0).getJsonArray("type").contains("iudx:Resource")) {
-                promise.complete(true);
+    catWebClient
+        .get(catPort, catHost, catItemPath)
+        .addQueryParam("id", id)
+        .expect(ResponsePredicate.JSON)
+        .send(
+            responseHandler -> {
+              if (responseHandler.succeeded()) {
+                HttpResponse<Buffer> response = responseHandler.result();
+                JsonObject responseBody = response.bodyAsJsonObject();
+                if (responseBody.getString("type").equalsIgnoreCase("urn:dx:cat:Success")
+                    && responseBody.getInteger("totalHits") > 0) {
+                  promise.complete(responseHandler.succeeded());
+                  /*if(responseBody.getJsonArray("results").getJsonObject(0)
+                  .getJsonArray("type").contains("iudx:Resource")) {
+                    promise.complete(true);
+                  } else {
+                    promise.fail(responseHandler.cause());
+                  }*/
+                } else {
+                  promise.fail(responseHandler.cause());
+                }
               } else {
-                promise.fail(responseHandler.cause());                
-              }*/
-            } else {
-              promise.fail(responseHandler.cause());
-            }
-          } else {
-            promise.fail(responseHandler.cause());
-          }
-        });
+                promise.fail(responseHandler.cause());
+              }
+            });
     return promise.future();
-  }  
+  }
 }

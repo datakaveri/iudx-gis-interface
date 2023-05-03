@@ -10,7 +10,7 @@ public class Constants {
   public static final String DETAIL = "detail";
   public static final String TITLE = "title";
   public static final String RESULTS = "results";
-  public static final String PRIMARY_KEY= "primaryKey";
+  public static final String PRIMARY_KEY = "primaryKey";
   public static final String PROVIDER_ID = "providerID";
   public static final String ORIGIN = "origin";
   public static final String ORIGIN_SERVER = "gis-server";
@@ -30,6 +30,7 @@ public class Constants {
   public static final String API = "api";
   public static final String USER_ID = "userid";
   public static final String WRITE_QUERY =
-      "INSERT INTO $0 (id,api,userid,epochtime,resourceid,isotime,providerid,size) VALUES ('$1','$2','$3',$4,'$5','$6','$7',$8)";
+      "INSERT INTO $0 (id,api,userid,epochtime,resourceid,isotime,providerid,size) "
+          + "VALUES ('$1','$2','$3',$4,'$5','$6','$7',$8)";
   public static final String MESSAGE = "message";
 }

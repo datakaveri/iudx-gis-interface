@@ -12,12 +12,10 @@ import io.vertx.core.json.JsonObject;
 import iudx.gis.server.apiserver.response.ResponseUrn;
 
 public class ResponseBuilder {
-  private final String status;
   private final JsonObject response;
 
   /** Initialise the object with Success or Failure. */
-  public ResponseBuilder(String status) {
-    this.status = status;
+  public ResponseBuilder() {
     response = new JsonObject();
   }
 

@@ -8,20 +8,18 @@ import io.vertx.ext.web.RoutingContext;
 import iudx.gis.server.apiserver.util.RequestType;
 import iudx.gis.server.apiserver.validation.ValidatorsHandlersFactory;
 import iudx.gis.server.apiserver.validation.types.Validator;
-import org.apache.http.HttpStatus;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ValidationHandler implements Handler<RoutingContext> {
 
   private static final Logger LOGGER = LogManager.getLogger(ValidationHandler.class);
   private Vertx vertx;
   private RequestType type;
-
 
   public ValidationHandler(Vertx vertx, RequestType type) {
     this.vertx = vertx;
@@ -42,10 +40,8 @@ public class ValidationHandler implements Handler<RoutingContext> {
 
     for (Validator validator : Optional.ofNullable(validations).orElse(Collections.emptyList())) {
       LOGGER.debug("validator :" + validator.getClass().getName());
-     validator.isValid();
+      validator.isValid();
     }
     context.next();
-    return;
   }
-
 }

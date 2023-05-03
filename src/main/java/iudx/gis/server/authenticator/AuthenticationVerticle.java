@@ -88,13 +88,14 @@ public class AuthenticationVerticle extends AbstractVerticle {
                 LOGGER.warn(
                     "JWT ignore expiration set to true, do not set IgnoreExpiration in production!!");
               }
-                dxApiBasePath = config().getString("dxApiBasePath");
-                adminBasePath = config().getString("adminBasePath");
-                api = Api.getInstance(dxApiBasePath,adminBasePath);
+              dxApiBasePath = config().getString("dxApiBasePath");
+              adminBasePath = config().getString("adminBasePath");
+              api = Api.getInstance(dxApiBasePath, adminBasePath);
 
-                JWTAuth jwtAuth = JWTAuth.create(vertx, jwtAuthOptions);
+              JWTAuth jwtAuth = JWTAuth.create(vertx, jwtAuthOptions);
               cacheService = CacheService.createProxy(vertx, CACHE_SERVICE_ADDRESS);
-              jwtAuthenticationService = new JwtAuthenticationServiceImpl(vertx, jwtAuth, config(), api, cacheService);
+              jwtAuthenticationService =
+                  new JwtAuthenticationServiceImpl(vertx, jwtAuth, config(), api, cacheService);
 
               /* Publish the Authentication service with the Event Bus against an address. */
               consumer =

@@ -4,12 +4,11 @@ import static iudx.gis.server.authenticator.authorization.Method.GET;
 
 import io.vertx.core.json.JsonArray;
 import iudx.gis.server.authenticator.model.JwtData;
+import iudx.gis.server.common.Api;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import iudx.gis.server.common.Api;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,19 +19,16 @@ public class ConsumerAuthStrategy implements AuthorizationStrategy {
   static Map<String, List<AuthorizationRequest>> consumerAuthorizationRules = new HashMap<>();
   static Api api;
   private static volatile ConsumerAuthStrategy instance;
-  private ConsumerAuthStrategy(Api apis)
-  {
+
+  private ConsumerAuthStrategy(Api apis) {
     api = apis;
     buildPermissions(api);
   }
 
   public static ConsumerAuthStrategy getInstance(Api apis) {
-    if (instance == null)
-    {
-      synchronized (ConsumerAuthStrategy.class)
-      {
-        if (instance == null)
-        {
+    if (instance == null) {
+      synchronized (ConsumerAuthStrategy.class) {
+        if (instance == null) {
           instance = new ConsumerAuthStrategy(apis);
         }
       }

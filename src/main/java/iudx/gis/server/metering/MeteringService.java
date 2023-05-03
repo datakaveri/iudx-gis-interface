@@ -17,7 +17,8 @@ public interface MeteringService {
   static MeteringService createProxy(Vertx vertx, String address) {
     return new MeteringServiceVertxEBProxy(vertx, address);
   }
+
   @Fluent
-  MeteringService insertMeteringValuesInRMQ(
+  MeteringService insertMeteringValuesInRmq(
       JsonObject request, Handler<AsyncResult<JsonObject>> handler);
 }

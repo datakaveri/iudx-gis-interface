@@ -5,9 +5,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.gis.server.cache.cacheImpl.CacheType;
-import iudx.gis.server.cache.cacheImpl.IudxCache;
-import iudx.gis.server.cache.cacheImpl.RevokedClientCache;
+import iudx.gis.server.cache.cacheimpl.CacheType;
+import iudx.gis.server.cache.cacheimpl.IudxCache;
+import iudx.gis.server.cache.cacheimpl.RevokedClientCache;
 import iudx.gis.server.database.postgres.PostgresService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -114,14 +114,10 @@ public class CacheServiceImpl implements CacheService {
     IudxCache cache = null;
     switch (cacheType) {
       case REVOKED_CLIENT:
-        {
-          cache = revokedClientCache;
-          break;
-        }
+        cache = revokedClientCache;
+        break;
       default:
-        {
-          throw new IllegalArgumentException("No cache type specified");
-        }
+        throw new IllegalArgumentException("No cache type specified");
     }
     return cache;
   }

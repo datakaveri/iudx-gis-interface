@@ -8,8 +8,6 @@ import static iudx.gis.server.common.Constants.METERING_SERVICE_ADDRESS;
 import static iudx.gis.server.common.Constants.PG_SERVICE_ADDRESS;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -37,9 +35,6 @@ import iudx.gis.server.authenticator.AuthenticationService;
 import iudx.gis.server.common.Api;
 import iudx.gis.server.database.postgres.PostgresService;
 import iudx.gis.server.metering.MeteringService;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
@@ -60,21 +55,16 @@ public class ApiServerVerticle extends AbstractVerticle {
     validHeaders.add("Content-Type");
   }
 
+  public String dxApiBasePath;
+  public String adminBasePath;
   private HttpServer server;
   private Router router;
   private int port;
-  private boolean isSSL;
+  private boolean isssl;
   private String keystore;
   private String keystorePassword;
-  private CatalogueService catalogueService;
-  private MeteringService meteringService;
   // private DatabaseService database;
   private PostgresService postgresService;
-  private AuthenticationService authenticator;
-  public String dxApiBasePath;
-  public String adminBasePath;
-  private String dxCatalogueBasePath;
-  private String dxAuthBasePath;
 
   @Override
   public void start() throws Exception {
@@ -96,9 +86,8 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     dxApiBasePath = config().getString("dxApiBasePath");
     adminBasePath = config().getString("adminBasePath");
-    dxCatalogueBasePath = config().getString("dxCatalogueBasePath");
-    dxAuthBasePath = config().getString("dxAuthBasePath");
-    Api api = Api.getInstance(dxApiBasePath,adminBasePath);
+    config().getString("dxCatalogueBasePath");
+    config().getString("dxAuthBasePath");
 
     router = Router.router(vertx);
     router
@@ -121,10 +110,10 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     router.route().handler(BodyHandler.create());
     /* Read ssl configuration. */
-    isSSL = config().getBoolean("ssl");
+    isssl = config().getBoolean("ssl");
 
     HttpServerOptions serverOptions = new HttpServerOptions();
-    if (isSSL) {
+    if (isssl) {
 
       /* Read the configuration and set the HTTPs server properties. */
 
@@ -160,9 +149,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     server.requestHandler(router).listen(port);
 
     /* Get a handler for the Service Discovery interface. */
-    authenticator = AuthenticationService.createProxy(vertx, AUTHENTICATION_SERVICE_ADDRESS);
-    meteringService = MeteringService.createProxy(vertx, METERING_SERVICE_ADDRESS);
+    AuthenticationService.createProxy(vertx, AUTHENTICATION_SERVICE_ADDRESS);
+    MeteringService.createProxy(vertx, METERING_SERVICE_ADDRESS);
     postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
+    Api api = Api.getInstance(dxApiBasePath, adminBasePath);
 
     ValidationHandler entityQueryValidationHandler =
         new ValidationHandler(vertx, RequestType.ENTITY_QUERY);
@@ -171,7 +161,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     router
         .get(api.getEntitiesEndpoint())
         .handler(entityQueryValidationHandler)
-        .handler(AuthHandler.create(vertx,config()))
+        .handler(AuthHandler.create(vertx, config()))
         .handler(this::handleEntitiesQuery)
         .failureHandler(validationsFailureHandler);
 
@@ -184,21 +174,21 @@ public class ApiServerVerticle extends AbstractVerticle {
     router
         .post(api.getAdminPath())
         .handler(adminCrudPathValidationHandler)
-        .handler(AuthHandler.create(vertx,config()))
+        .handler(AuthHandler.create(vertx, config()))
         .handler(this::handlePostAdminPath)
         .failureHandler(validationsFailureHandler);
 
     router
         .put(api.getAdminPath())
         .handler(adminCrudPathValidationHandler)
-        .handler(AuthHandler.create(vertx,config()))
+        .handler(AuthHandler.create(vertx, config()))
         .handler(this::handlePutAdminPath)
         .failureHandler(validationsFailureHandler);
 
     router
         .delete(api.getAdminPath())
         .handler(adminCrudPathIdValidationHandler)
-        .handler(AuthHandler.create(vertx,config()))
+        .handler(AuthHandler.create(vertx, config()))
         .handler(this::handleDeleteAdminPath)
         .failureHandler(validationsFailureHandler);
     router
@@ -231,19 +221,20 @@ public class ApiServerVerticle extends AbstractVerticle {
                   .end(generateResponse(HttpStatusCode.NOT_FOUND, YET_NOT_IMPLEMENTED));
             });
 
-    catalogueService = new CatalogueService(vertx, config());
+    new CatalogueService(vertx, config());
 
     /* Print the deployed endpoints */
     printDeployedEndpoints(router);
-
   }
+
   private void printDeployedEndpoints(Router router) {
-    for(Route route:router.getRoutes()) {
-      if(route.getPath() != null) {
+    for (Route route : router.getRoutes()) {
+      if (route.getPath() != null) {
         LOGGER.info("API Endpoints deployed : " + route.methods() + " : " + route.getPath());
       }
     }
   }
+
   private void handleDeleteAdminPath(RoutingContext routingContext) {
     LOGGER.trace("Info:handleDeleteAdminPath method started.;");
     HttpServerResponse response = routingContext.response();
@@ -252,27 +243,31 @@ public class ApiServerVerticle extends AbstractVerticle {
     String adminDetailsQuery = PgsqlQueryBuilder.getAdminDetailsQuery(resourceId);
     String deleteAdminDetailsQuery = PgsqlQueryBuilder.deleteAdminDetailsQuery(resourceId);
 
-    postgresService.executeQuery(adminDetailsQuery, selectHandler -> {
-      if (selectHandler.succeeded()) {
-        JsonObject result = selectHandler.result();
-        JsonArray rows = result.getJsonArray("result");
-        if (rows.size() < 1) {
-          handleResponse(response, HttpStatusCode.NOT_FOUND, ResponseUrn.RESOURCE_NOT_FOUND);
-        } else {
-          postgresService.executeQuery(deleteAdminDetailsQuery, deleteHandler -> {
-            if (deleteHandler.succeeded()) {
-              handleResponse(response, HttpStatusCode.SUCCESS, ResponseUrn.SUCCESS);
-              routingContext.data().put(RESPONSE_SIZE, 0);
-              //Future.future(fu -> updateAuditTable(routingContext));
+    postgresService.executeQuery(
+        adminDetailsQuery,
+        selectHandler -> {
+          if (selectHandler.succeeded()) {
+            JsonObject result = selectHandler.result();
+            JsonArray rows = result.getJsonArray("result");
+            if (rows.size() < 1) {
+              handleResponse(response, HttpStatusCode.NOT_FOUND, ResponseUrn.RESOURCE_NOT_FOUND);
             } else {
-              LOGGER.info("insert failed :{}", deleteHandler.cause().getMessage());
+              postgresService.executeQuery(
+                  deleteAdminDetailsQuery,
+                  deleteHandler -> {
+                    if (deleteHandler.succeeded()) {
+                      handleResponse(response, HttpStatusCode.SUCCESS, ResponseUrn.SUCCESS);
+                      routingContext.data().put(RESPONSE_SIZE, 0);
+                      // Future.future(fu -> updateAuditTable(routingContext));
+                    } else {
+                      LOGGER.info("insert failed :{}", deleteHandler.cause().getMessage());
+                    }
+                  });
             }
-          });
-        }
-      } else {
-        LOGGER.info("select failed :{}", selectHandler.cause().getMessage());
-      }
-    });
+          } else {
+            LOGGER.info("select failed :{}", selectHandler.cause().getMessage());
+          }
+        });
   }
 
   private void handlePutAdminPath(RoutingContext routingContext) {
@@ -286,28 +281,31 @@ public class ApiServerVerticle extends AbstractVerticle {
     String adminDetailsQuery = PgsqlQueryBuilder.getAdminDetailsQuery(resourceId);
     String updateAdminDetailsQuery = PgsqlQueryBuilder.updateAdminDetailsQuery(requestBody);
 
-
-    postgresService.executeQuery(adminDetailsQuery, selectHandler -> {
-      if (selectHandler.succeeded()) {
-        JsonObject result = selectHandler.result();
-        JsonArray rows = result.getJsonArray("result");
-        if (rows.size() < 1) {
-          handleResponse(response, HttpStatusCode.NOT_FOUND, ResponseUrn.RESOURCE_NOT_FOUND);
-        } else {
-          postgresService.executeQuery(updateAdminDetailsQuery, updateHandler -> {
-            if (updateHandler.succeeded()) {
-              handleResponse(response, HttpStatusCode.SUCCESS, ResponseUrn.SUCCESS);
-              routingContext.data().put(RESPONSE_SIZE, 0);
-              //Future.future(fu -> updateAuditTable(routingContext));
+    postgresService.executeQuery(
+        adminDetailsQuery,
+        selectHandler -> {
+          if (selectHandler.succeeded()) {
+            JsonObject result = selectHandler.result();
+            JsonArray rows = result.getJsonArray("result");
+            if (rows.size() < 1) {
+              handleResponse(response, HttpStatusCode.NOT_FOUND, ResponseUrn.RESOURCE_NOT_FOUND);
             } else {
-              LOGGER.info("insert failed :{}", updateHandler.cause().getMessage());
+              postgresService.executeQuery(
+                  updateAdminDetailsQuery,
+                  updateHandler -> {
+                    if (updateHandler.succeeded()) {
+                      handleResponse(response, HttpStatusCode.SUCCESS, ResponseUrn.SUCCESS);
+                      routingContext.data().put(RESPONSE_SIZE, 0);
+                      // Future.future(fu -> updateAuditTable(routingContext));
+                    } else {
+                      LOGGER.info("insert failed :{}", updateHandler.cause().getMessage());
+                    }
+                  });
             }
-          });
-        }
-      } else {
-        LOGGER.info("select failed :{}", selectHandler.cause().getMessage());
-      }
-    });
+          } else {
+            LOGGER.info("select failed :{}", selectHandler.cause().getMessage());
+          }
+        });
   }
 
   private void handlePostAdminPath(RoutingContext routingContext) {
@@ -320,34 +318,37 @@ public class ApiServerVerticle extends AbstractVerticle {
     String adminDetailsQuery = PgsqlQueryBuilder.getAdminDetailsQuery(resourceId);
     String insertAdminDetailsQuery = PgsqlQueryBuilder.insertAdminDetailsQuery(requestBody);
 
-
-    postgresService.executeQuery(adminDetailsQuery, selectHandler -> {
-      if (selectHandler.succeeded()) {
-        JsonObject result = selectHandler.result();
-        JsonArray rows = result.getJsonArray("result");
-        if (rows.size() > 0) {
-          handleResponse(response, HttpStatusCode.CONFLICT, ResponseUrn.RESOURCE_ALREADY_EXISTS);
-        } else {
-          postgresService.executeQuery(insertAdminDetailsQuery, insertHandler -> {
-            if (insertHandler.succeeded()) {
-              handleResponse(response, HttpStatusCode.CREATED, ResponseUrn.CREATED);
-              routingContext.data().put(RESPONSE_SIZE, 0);
-              //Future.future(fu -> updateAuditTable(routingContext));
+    postgresService.executeQuery(
+        adminDetailsQuery,
+        selectHandler -> {
+          if (selectHandler.succeeded()) {
+            JsonObject result = selectHandler.result();
+            JsonArray rows = result.getJsonArray("result");
+            if (rows.size() > 0) {
+              handleResponse(
+                  response, HttpStatusCode.CONFLICT, ResponseUrn.RESOURCE_ALREADY_EXISTS);
             } else {
-              LOGGER.info("insert failed :{}", insertHandler.cause().getMessage());
+              postgresService.executeQuery(
+                  insertAdminDetailsQuery,
+                  insertHandler -> {
+                    if (insertHandler.succeeded()) {
+                      handleResponse(response, HttpStatusCode.CREATED, ResponseUrn.CREATED);
+                      routingContext.data().put(RESPONSE_SIZE, 0);
+                      // Future.future(fu -> updateAuditTable(routingContext));
+                    } else {
+                      LOGGER.info("insert failed :{}", insertHandler.cause().getMessage());
+                    }
+                  });
             }
-          });
-        }
-      } else {
-        LOGGER.info("select failed :{}", selectHandler.cause().getMessage());
-      }
-    });
+          } else {
+            LOGGER.info("select failed :{}", selectHandler.cause().getMessage());
+          }
+        });
   }
 
   private void handleEntitiesQuery(RoutingContext routingContext) {
     LOGGER.trace("Info:handleEntitiesQuery method started.;");
     /* Handles HTTP request from client */
-    JsonObject authInfo = (JsonObject) routingContext.data().get("authInfo");
     HttpServerRequest request = routingContext.request();
     /* Handles HTTP response from server to client */
     HttpServerResponse response = routingContext.response();
@@ -363,7 +364,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * Execute a search query in DB
    *
    * @param json valid json query
-   * @param response
+   * @param response HttpServerResponse
    */
   private void executeSearchQuery(
       RoutingContext context, JsonObject json, HttpServerResponse response) {
@@ -371,17 +372,19 @@ public class ApiServerVerticle extends AbstractVerticle {
     String id = json.getString("id");
     String query = PgsqlQueryBuilder.getAdminDetailsQuery(id);
 
-    postgresService.executeQuery(query, handler -> {
-      if (handler.succeeded()) {
-        LOGGER.debug("Success: Search Success");
-        handleSuccessResponse(response, ResponseType.Ok.getCode(), handler.result());
-        context.data().put(RESPONSE_SIZE, response.bytesWritten());
-        //Future.future(fu -> updateAuditTable(context));
-      } else if (handler.failed()) {
-        LOGGER.error("Fail: Search Fail");
-        processBackendResponse(response, handler.cause().getMessage());
-      }
-    });
+    postgresService.executeQuery(
+        query,
+        handler -> {
+          if (handler.succeeded()) {
+            LOGGER.debug("Success: Search Success");
+            handleSuccessResponse(response, ResponseType.Ok.getCode(), handler.result());
+            context.data().put(RESPONSE_SIZE, response.bytesWritten());
+            // Future.future(fu -> updateAuditTable(context));
+          } else if (handler.failed()) {
+            LOGGER.error("Fail: Search Fail");
+            processBackendResponse(response, handler.cause().getMessage());
+          }
+        });
   }
 
   private void handleSuccessResponse(
@@ -440,38 +443,5 @@ public class ApiServerVerticle extends AbstractVerticle {
         .put(JSON_TITLE, statusCode.getDescription())
         .put(JSON_DETAIL, message)
         .toString();
-  }
-
-
-  private Future<Void> updateAuditTable(RoutingContext context) {
-    Promise<Void> promise = Promise.promise();
-    JsonObject authInfo = (JsonObject) context.data().get("authInfo");
-
-    ZonedDateTime zst = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
-    long time = zst.toInstant().toEpochMilli();
-    String isoTime = zst.truncatedTo(ChronoUnit.SECONDS).toString();
-
-    JsonObject request = new JsonObject();
-    request.put(EPOCH_TIME, time);
-    request.put(ISO_TIME, isoTime);
-    request.put(USER_ID, authInfo.getValue(USER_ID));
-    request.put(IID,authInfo.getValue(IID));
-    request.put(ID, authInfo.getValue(ID));
-    request.put(API, authInfo.getValue(API_ENDPOINT));
-    request.put(RESPONSE_SIZE, context.data().get(RESPONSE_SIZE));
-
-    meteringService.insertMeteringValuesInRMQ(
-        request,
-        handler -> {
-          if (handler.succeeded()) {
-            LOGGER.debug("inserted into rmq");
-            promise.complete();
-          } else {
-            LOGGER.error("failed to insert into rmq "+handler.result());
-            promise.complete();
-          }
-        });
-
-    return promise.future();
   }
 }

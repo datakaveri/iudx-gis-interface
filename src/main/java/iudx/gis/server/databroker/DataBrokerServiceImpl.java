@@ -31,8 +31,11 @@ public class DataBrokerServiceImpl implements DataBrokerService {
 
     Buffer buffer = Buffer.buffer(body.toString());
 
-    if (!client.isConnected()) rabbitMqClientStartFuture = client.start();
-    else rabbitMqClientStartFuture = Future.succeededFuture();
+    if (!client.isConnected()) {
+      rabbitMqClientStartFuture = client.start();
+    } else {
+      rabbitMqClientStartFuture = Future.succeededFuture();
+    }
 
     rabbitMqClientStartFuture
         .compose(rabbitStartupFuture -> client.basicPublish(toExchange, routingKey, buffer))

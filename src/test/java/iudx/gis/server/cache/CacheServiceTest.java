@@ -14,7 +14,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import iudx.gis.server.cache.cacheImpl.CacheType;
+import iudx.gis.server.cache.cacheimpl.CacheType;
 import iudx.gis.server.database.postgres.PostgresService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

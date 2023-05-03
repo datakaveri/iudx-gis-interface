@@ -19,23 +19,20 @@ public class StringTypeValidator implements Validator {
 
   @Override
   public boolean isValid() {
-    String errorMessage = "";
+
     LOGGER.debug("value : " + value + "required : " + required);
     if (required && (value == null || value.isBlank())) {
-      errorMessage = "Validation error : null or blank value for required mandatory field";
       throw new DxRuntimeException(failureCode(), ResponseUrn.INVALID_ATTR_VALUE, failureMessage());
     } else {
       if (value == null) {
         return true;
       }
       if (value.isBlank()) {
-        errorMessage = "Validation error :  blank value for passed";
         throw new DxRuntimeException(failureCode(), ResponseUrn.INVALID_ATTR_VALUE,
             failureMessage());
       }
     }
     if (value != null && value.length() > 100) {
-      errorMessage = "Validation error : length >100 not allowed";
       throw new DxRuntimeException(failureCode(), ResponseUrn.INVALID_ATTR_VALUE, failureMessage());
     }
     return true;

@@ -1,6 +1,7 @@
 package iudx.gis.server.metering;
 
 import static iudx.gis.server.common.Constants.*;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
@@ -18,13 +19,12 @@ public class MeteringVerticle extends AbstractVerticle {
   private DataBrokerService dataBrokerService;
   private JsonObject config;
 
-
   @Override
   public void start() {
 
     config = config();
-    dataBrokerService = DataBrokerService.createProxy(vertx,DATABROKER_SERVICE_ADDRESS);
-    metering = new MeteringServiceImpl(dataBrokerService,config);
+    dataBrokerService = DataBrokerService.createProxy(vertx, DATABROKER_SERVICE_ADDRESS);
+    metering = new MeteringServiceImpl(dataBrokerService, config);
     binder = new ServiceBinder(vertx);
     consumer =
         binder.setAddress(METERING_SERVICE_ADDRESS).register(MeteringService.class, metering);

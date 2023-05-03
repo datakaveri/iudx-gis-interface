@@ -1,6 +1,5 @@
 package iudx.gis.server.apiserver.response;
 
-import java.util.stream.Stream;
 
 public enum ResponseType {
   Ok(200, "Ok"),
