@@ -375,11 +375,18 @@ public class ApiServerVerticle extends AbstractVerticle {
     postgresService.executeQuery(
         query,
         handler -> {
+          JsonObject result = handler.result();
           if (handler.succeeded()) {
             LOGGER.debug("Success: Search Success");
-            handleSuccessResponse(response, ResponseType.Ok.getCode(), handler.result());
-            context.data().put(RESPONSE_SIZE, response.bytesWritten());
-            // Future.future(fu -> updateAuditTable(context));
+            JsonArray rows = result.getJsonArray("result");
+            if (rows.size() < 1) {
+              handleResponse(
+                  response, HttpStatusCode.NOT_FOUND, ResponseUrn.RESOURCE_NOT_FOUND);
+            } else {
+              handleSuccessResponse(response, ResponseType.Ok.getCode(), handler.result());
+              context.data().put(RESPONSE_SIZE, response.bytesWritten());
+              // Future.future(fu -> updateAuditTable(context));
+            }
           } else if (handler.failed()) {
             LOGGER.error("Fail: Search Fail");
             processBackendResponse(response, handler.cause().getMessage());

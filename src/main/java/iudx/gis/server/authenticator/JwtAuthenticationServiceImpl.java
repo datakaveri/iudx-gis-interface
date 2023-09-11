@@ -10,6 +10,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -95,7 +96,6 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     Future<JwtData> jwtDecodeFuture = decodeJwt(token);
 
     ResultContainer result = new ResultContainer();
-    LOGGER.debug("endPoint " + endPoint);
     if (endPoint != null && endPoint.equals(api.getAdminPath())) {
       jwtDecodeFuture
           .compose(
@@ -185,7 +185,6 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
   private Future<String> isOpenResource(String id) {
     LOGGER.trace("isOpenResource() started");
     Promise<String> promise = Promise.promise();
-
     String acl = resourceIdCache.getIfPresent(id);
     if (acl != null) {
       LOGGER.debug("Cache Hit");
@@ -193,31 +192,29 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     } else {
       // cache miss
       LOGGER.debug("Cache miss calling cat server");
-      String[] idComponents = id.split("/");
-      if (idComponents.length < 4) {
-        promise.fail("Not Found " + id);
-      }
-      String groupId =
-          (idComponents.length == 4)
-              ? id
-              : String.join("/", Arrays.copyOfRange(idComponents, 0, 4));
       // 1. check group accessPolicy.
       // 2. check resource exist, if exist set accessPolicy to group accessPolicy. else fail
-      Future<String> groupAclFuture = getGroupAccessPolicy(groupId);
-      groupAclFuture
-          .compose(
-              groupACLResult -> {
-                String groupPolicy = groupACLResult;
-                return isResourceExist(id, groupPolicy);
-              })
+      getGrupId(id)
           .onSuccess(
-              handler -> {
-                promise.complete(resourceIdCache.getIfPresent(id));
-              })
-          .onFailure(
-              handler -> {
-                LOGGER.error("cat response failed for Id : (" + id + ")" + handler.getCause());
-                promise.fail("Not Found " + id);
+              groupId -> {
+                Future<String> groupAclFuture = getGroupAccessPolicy(groupId);
+                groupAclFuture
+                    .compose(
+                        groupACLResult -> {
+                          String groupPolicy = groupACLResult;
+                          return isResourceExist(id, groupPolicy);
+                        })
+                    .onSuccess(
+                        handler -> {
+                          promise.complete(resourceIdCache.getIfPresent(id));
+                        })
+                    .onFailure(
+                        handler -> {
+                          LOGGER.error(
+                              "cat response failed for Id : (" + id + ")" + handler.getCause());
+                          promise.fail("Not Found " + id);
+                        });
+
               });
     }
     return promise.future();
@@ -483,4 +480,35 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     JwtData jwtData;
     boolean isOpen;
   }
+
+  public Future<String> getGrupId(String id) {
+    LOGGER.debug("get item for id: {} ", id);
+    Promise<String> promise = Promise.promise();
+
+    catWebClient
+        .get(port, host, path)
+        .addQueryParam("property", "[id]")
+        .addQueryParam("value", "[[" + id + "]]")
+        .addQueryParam("filter", "[id,resourceGroup]")
+        .expect(ResponsePredicate.JSON)
+        .send(
+            relHandler -> {
+              if (relHandler.succeeded()
+                  && relHandler.result().bodyAsJsonObject().getInteger("totalHits") > 0) {
+                JsonArray resultArray =
+                    relHandler.result().bodyAsJsonObject().getJsonArray("results");
+                JsonObject response = resultArray.getJsonObject(0);
+                String groupId =
+                    response.containsKey("resourceGroup") ? response.getString("resourceGroup") :
+                        response.getString("id");
+                promise.complete(groupId);
+              } else {
+                LOGGER.error("catalogue call search api failed: " + relHandler.cause());
+                promise.fail("catalogue call search api failed");
+              }
+            });
+
+    return promise.future();
+  }
+
 }

@@ -12,8 +12,7 @@ public class IdTypeValidator implements Validator {
   private static final Logger LOGGER = LogManager.getLogger(IdTypeValidator.class);
   private static final Pattern regexIDPattern =
       Pattern.compile(
-          "^[a-zA-Z0-9.]{4,100}/{1}[a-zA-Z0-9.]{4,100}/{1}[a-zA-Z.]{4,100}/{1}[a-zA-Z-_.]"
-              + "{4,100}/{1}[a-zA-Z0-9-_.]{4,100}$");
+          "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
   private Integer maxLength = VALIDATION_ID_MAX_LEN;
   private String value;
   private boolean required;

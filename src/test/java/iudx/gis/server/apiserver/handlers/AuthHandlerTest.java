@@ -5,6 +5,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -53,6 +54,8 @@ public class AuthHandlerTest {
   private static String dxApiBasePath;
   private static String adminBasePath;
   private static Api api;
+  @Mock
+  RequestBody requestBody;
   @BeforeEach
   public void setUp(VertxTestContext vertxTestContext, Vertx vertx) {
     //authHandler = AuthHandler.create(vertx);
@@ -66,6 +69,7 @@ public class AuthHandlerTest {
     jsonObject.put("adminBasePath","/admin/gis");
     dxApiBasePath = "/ngsi-ld/v1";
     adminBasePath = "/admin/gis";
+    AuthHandler.create(vertx,jsonObject);
     api = Api.getInstance(dxApiBasePath,adminBasePath);
     //lenient().doReturn(httpServerRequest).when(routingContextMock).request();
     //lenient().doReturn(httpServerResponse).when(routingContextMock).response();
@@ -84,10 +88,12 @@ public class AuthHandlerTest {
     //HttpMethod httpMethodMock = mock(HttpMethod.class);
     //Map map = new HashMap<String, Object>();
     //AuthenticationService authenticationServiceMock = mock(AuthenticationService.class);
-
+    when(routingContextMock.body()).thenReturn(requestBody);
     //when(routingContextMock.request()).thenReturn(httpServerRequest);
-    when(routingContextMock.getBodyAsJson()).thenReturn(jsonObject);
+    when(requestBody.asJsonObject()).thenReturn(jsonObject);
     when(httpServerRequest.path()).thenReturn(api.getEntitiesRegex());
+
+
     //doReturn(NGSILD_ENTITIES_URL).when(httpServerRequest).path();
 
     AuthHandler.authenticator = mock(AuthenticationService.class);
@@ -128,7 +134,7 @@ public class AuthHandlerTest {
   public void testHandleFail(VertxTestContext vertxTestContext) {
     //JsonObject jsonObjectMock = new JsonObject().put("id", "iddd");
     authHandler = new AuthHandler();
-    String str = api.getEntitiesRegex();
+    String str = api.getEntitiesEndpoint();
     JsonObject jsonObject = new JsonObject();
     jsonObject.put("Dummy Key", "Dummy Value");
 
@@ -137,6 +143,10 @@ public class AuthHandlerTest {
     //Map map = new HashMap<String, Object>();
     //AuthenticationService authenticationServiceMock = mock(AuthenticationService.class);
     //AsyncResult<JsonObject> asyncResult = mock(AsyncResult.class);
+
+    when(routingContextMock.body()).thenReturn(requestBody);
+    //when(routingContextMock.request()).thenReturn(httpServerRequest);
+    when(requestBody.asJsonObject()).thenReturn(jsonObject);
 
     when(routingContextMock.getBodyAsJson()).thenReturn(jsonObject);
     when(httpServerRequest.path()).thenReturn(str);
