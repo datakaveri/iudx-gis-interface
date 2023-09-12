@@ -46,7 +46,7 @@ public class ValidationHandlerTest {
         when(routingContextMock.request()).thenReturn(httpServerRequestMock);
 
         parameters = MultiMap.caseInsensitiveMultiMap();
-        parameters.set(Constants.ID, "asdasd/asdasd/adasd/adasd/adasd");
+        parameters.set(Constants.ID, "83c2e5c2-3574-4e11-9530-2b1fbdfce836");
 
         when(httpServerRequestMock.params()).thenReturn(parameters);
         when(httpServerRequestMock.headers()).thenReturn(multiMapMock);

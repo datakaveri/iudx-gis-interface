@@ -7,8 +7,8 @@
       "$id": "#root/properties/id",
       "type": "string",
       "title": "Id",
-      "pattern": "^[a-zA-Z0-9.]{4,100}/{1}[a-zA-Z0-9.]{4,100}/{1}[a-zA-Z.]{4,100}/{1}[a-zA-Z-_.]{4,100}/{1}[a-zA-Z0-9-_.]{4,100}$",
-      "maxLength": 512
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "maxLength": 36
     },
     "server-url": {
       "$id": "#root/properties/server-url",

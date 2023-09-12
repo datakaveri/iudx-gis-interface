@@ -54,13 +54,7 @@ public class AuthHandler implements Handler<RoutingContext> {
       token = "public";
     }
 
-    String paramId = getId4rmRequest();
-
-    String id = null;
-
-    if (paramId != null && !paramId.isBlank()) {
-      id = paramId;
-    }
+    String id = getId(context);
 
     JsonObject authInfo =
         new JsonObject()
@@ -68,7 +62,6 @@ public class AuthHandler implements Handler<RoutingContext> {
             .put(HEADER_TOKEN, token)
             .put(API_METHOD, method)
             .put(ID, id);
-
     LOGGER.debug("Info :" + context.request().path());
     LOGGER.debug("Info :" + context.request().path().split("/").length);
 
@@ -118,8 +111,30 @@ public class AuthHandler implements Handler<RoutingContext> {
     return path;
   }
 
+  private String getId(RoutingContext context) {
+    String paramId = getId4rmRequest();
+    String bodyId = getId4rmBody(context);
+    String id;
+    if (paramId != null && !paramId.isBlank()) {
+      id = paramId;
+    } else {
+      id = bodyId;
+    }
+    return id;
+  }
+
   private String getId4rmRequest() {
     return request.getParam(ID);
+  }
+
+  private String getId4rmBody(RoutingContext context) {
+    JsonObject body = context.body().asJsonObject();
+    String id = null;
+    if (body != null) {
+      id = body.getString("id");
+
+    }
+    return id;
   }
 
   private JsonObject generateResponse(ResponseUrn urn, HttpStatusCode statusCode) {
