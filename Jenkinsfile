@@ -37,22 +37,22 @@ pipeline {
         jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'iudx/gis/server/apiserver/*.class,**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/gis/server/deploy/*.class,iudx/gis/server/databroker/DataBrokerService.class,iudx/gis/server/databroker/DataBrokerServiceImpl.class,iudx/gis/server/apiserver/validation/types/Validator.class,iudx/gis/server/metering/MeteringService.class,iudx/gis/server/cache/CacheService.class,iudx/gis/server/database/postgres/PostgresService.class,**/*JwtDataConverter.class'
       }
       post{
-      always {
-               recordIssues(
-                             enabledForFailure: true,
-                             blameDisabled: true,
-                             forensicsDisabled: true,
-                             qualityGates: [[threshold:0, type: 'TOTAL', unstable: false]],
-                             tool: checkStyle(pattern: 'target/checkstyle-result.xml')
-                            )
-               recordIssues(
-                             enabledForFailure: true,
-                             blameDisabled: true,
-                             forensicsDisabled: true,
-                             qualityGates: [[threshold:0, type: 'TOTAL', unstable: false]],
-                             tool: pmdParser(pattern: 'target/pmd.xml')
-                            )
-             }
+        always {
+          recordIssues(
+            enabledForFailure: true,
+            blameDisabled: true,
+            forensicsDisabled: true,
+            qualityGates: [[threshold:0, type: 'TOTAL', unstable: false]],
+            tool: checkStyle(pattern: 'target/checkstyle-result.xml')
+          )
+          recordIssues(
+            enabledForFailure: true,
+            blameDisabled: true,
+            forensicsDisabled: true,
+            qualityGates: [[threshold:0, type: 'TOTAL', unstable: false]],
+            tool: pmdParser(pattern: 'target/pmd.xml')
+          )
+        } 
         failure{
           script{
             sh 'docker compose -f docker-compose.test.yml down --remove-orphans'
@@ -90,7 +90,7 @@ pipeline {
           script{
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
-            sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/gis/Newman/IUDX_GIS_Server_APIs_V5.0.0.postman_collection.json -e /home/ubuntu/configs/gis-postman-env.json -n 2 --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/gis/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
+            sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/gis/Newman/IUDX_GIS_Server_APIs_V5.0.0.postman_collection.json -e /home/ubuntu/configs/5.0.0/gis-postman-env.json -n 2 --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/gis/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
             runZapAttack()
           }
         }
@@ -110,7 +110,7 @@ pipeline {
       }
     }
 
-    stage('Continuous Deployment') {
+    stage('Push Images') {
       when {
         allOf {
           anyOf {
@@ -121,53 +121,15 @@ pipeline {
             triggeredBy cause: 'UserIdCause'
           }
           expression {
-            return env.GIT_BRANCH == 'origin/master';
+            return env.GIT_BRANCH == 'origin/5.0.0';
           }
         }
       }
-      stages {
-        stage('Push Images') {
-          steps {
-            script {
-              docker.withRegistry( registryUri, registryCredential ) {
-                devImage.push("5.0.0-alpha-${env.GIT_HASH}")
-                deplImage.push("5.0.0-alpha-${env.GIT_HASH}")
-              }
-            }
-          }
-        }
-        stage('Docker Swarm deployment') {
-          steps {
-            script {
-              sh "ssh azureuser@docker-swarm 'docker service update gis_gis --image ghcr.io/datakaveri/gis-depl:5.0.0-alpha-${env.GIT_HASH}'"
-              sh 'sleep 10'
-            }
-          }
-          post{
-            failure{
-              error "Failed to deploy image in Docker Swarm"
-            }
-          }
-        }
-        stage('Integration test on swarm deployment') {
-          steps {
-            node('built-in') {
-              script{
-                sh 'newman run /var/lib/jenkins/iudx/gis/Newman/IUDX_GIS_Server_APIs_V5.0.0.postman_collection.json -e /home/ubuntu/configs/cd/gis-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/gis/Newman/report/cd-report.html --reporter-htmlextra-skipSensitiveData'
-              }
-            }
-          }
-          post{
-            always{
-              node('built-in') {
-                script{
-                  publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/gis/Newman/report/', reportFiles: 'cd-report.html', reportTitles: '', reportName: 'Docker-Swarm Integration Test Report'])
-                }
-              }
-            }
-            failure{
-              error "Test failure. Stopping pipeline execution!"
-            }
+      steps {
+        script {
+          docker.withRegistry( registryUri, registryCredential ) {
+            devImage.push("5.0.0-${env.GIT_HASH}")
+            deplImage.push("5.0.0-${env.GIT_HASH}")
           }
         }
       }
@@ -176,7 +138,7 @@ pipeline {
   post{
     failure{
       script{
-        if (env.GIT_BRANCH == 'origin/master')
+        if (env.GIT_BRANCH == 'origin/5.0.0')
         emailext recipientProviders: [buildUser(), developers()], to: '$RS_RECIPIENTS, $DEFAULT_RECIPIENTS', subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!', body: '''$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
 Check console output at $BUILD_URL to view the results.'''
       }
