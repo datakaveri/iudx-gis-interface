@@ -73,7 +73,7 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
       final CacheService cacheService) {
     this.jwtAuth = jwtAuth;
     this.audience = config.getString("audience");
-    this.iss = config.getString("authServerHost");
+    this.iss = config.getString("iss");
     this.host = config.getString("catServerHost");
     this.port = config.getInteger("catServerPort");
     this.catBasePath = config.getString("dxCatalogueBasePath");
