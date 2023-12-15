@@ -26,7 +26,8 @@
       "authServerHost": "",
       "catServerHost": "",
       "catServerPort": 0,
-      "jwtIgnoreExpiry": true
+      "jwtIgnoreExpiry": true,
+      "iss": ""
     },
     {
       "id": "iudx.gis.server.metering.MeteringVerticle",
