@@ -140,7 +140,7 @@ pipeline {
           steps {
             script {
               sh "ssh azureuser@docker-swarm 'docker service update gis_gis --image ghcr.io/datakaveri/gis-depl:5.5.0-alpha-${env.GIT_HASH}'"
-              sh 'sleep 10'
+              sh 'sleep 20'
             }
           }
           post{
