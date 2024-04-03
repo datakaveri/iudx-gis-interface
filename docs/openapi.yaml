@@ -14,7 +14,7 @@ consumes:
 
 info:
   title: "Data Exchange GIS Interface APIs"
-  version: 4.5.0
+  version: 5.5.0
   description: |
     # Introduction
     
@@ -98,7 +98,7 @@ paths:
         - lang: 'cURL'
           label: 'get latest data'
           source: |
-            curl --location --request GET 'https://example-gis.com/ngsi-ld/v1/entities?id=iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR055' \
+            curl --location --request GET 'https://example-gis.com/ngsi-ld/v1/entities?id=d33533e6-ab10-4918-8ea1-4390c68fb464' \
             --header 'token: <tokenValue>'
 
       responses:
@@ -295,7 +295,7 @@ paths:
         - lang: 'cURL'
           label: 'delete GIS entry'
           source: |
-            curl --location --request DELETE 'https://example-gis.com/admin/gis/serverInfo?id=iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR1059' \
+            curl --location --request DELETE 'https://example-gis.com/admin/gis/serverInfo?id=d33533e6-ab10-4918-8ea1-4390c68fb465' \
             --header 'token: <tokenValue>'
       
 
@@ -331,7 +331,7 @@ paths:
 
       description: |
         Delete admin API allows an admin to delete Gis information. Based on the input provided, the API validates the access control of the user with DX Auth server to allow or deny access to the API. 
-    
+
 
 components:
   schemas:
@@ -355,7 +355,7 @@ components:
           type: boolean
       example:
         id:
-          "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR059"
+          "d33533e6-ab10-4918-8ea1-4390c68fb464"
         server: "https://example-gis.com/apis"
         server-port: 1234
         isSecure: false
@@ -392,7 +392,7 @@ components:
             - password
             - tokenURL
       example:
-        "id": "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR1059"
+        "id": "d33533e6-ab10-4918-8ea1-4390c68fb465"
         "server-url": "https://example-gis.com/apis"
         "server-port": 1234
         "isSecure": true
@@ -421,7 +421,7 @@ components:
         title: Successful Operation
         results: [
           {
-            "iudx_resource_id": "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR055",
+            "iudx_resource_id": "d33533e6-ab10-4918-8ea1-4390c68fb464",
             "url": "https://map.varanasismartcity.gov.in/varanasismartcity",
             "isopen": true,
             "port": 123,
@@ -492,7 +492,7 @@ components:
       example:
         type: urn:dx:rs:invalidPayloadFormat
         title: Bad Request
-        detail: provided string should respect pattern ^[a-zA-Z0-9.]{4,100}/{1}[a-zA-Z0-9.]{4,100}/{1}[a-zA-Z.]{4,100}/{1}[a-zA-Z-_.]{4,100}/{1}[a-zA-Z0-9-_.]{4,100}$
+        detail: "Validation error : Invalid id"
 
     InvalidResourceIdErrorResponse:
       title: InvalidResourceIdErrorResponse
