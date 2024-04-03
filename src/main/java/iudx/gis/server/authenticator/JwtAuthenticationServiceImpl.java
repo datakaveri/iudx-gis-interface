@@ -58,12 +58,6 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
           .maximumSize(1000)
           .expireAfterAccess(CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES)
           .build();
-  // resourceGroupCache will contain ACL info about all resource group in a resource server
-  Cache<String, String> resourceGroupCache =
-      CacheBuilder.newBuilder()
-          .maximumSize(1000)
-          .expireAfterAccess(CACHE_TIMEOUT_AMOUNT, TimeUnit.MINUTES)
-          .build();
 
   public JwtAuthenticationServiceImpl(
       Vertx vertx,
@@ -187,34 +181,19 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     Promise<String> promise = Promise.promise();
     String acl = resourceIdCache.getIfPresent(id);
     if (acl != null) {
-      LOGGER.debug("Cache Hit");
+      LOGGER.info("Cache Hit");
       promise.complete(acl);
     } else {
-      // cache miss
-      LOGGER.debug("Cache miss calling cat server");
-      // 1. check group accessPolicy.
-      // 2. check resource exist, if exist set accessPolicy to group accessPolicy. else fail
-      getGrupId(id)
+      LOGGER.info("Cache miss calling cat server");
+      Future<String> aclFuture = getAccessPolicy(id);
+      aclFuture
           .onSuccess(
-              groupId -> {
-                Future<String> groupAclFuture = getGroupAccessPolicy(groupId);
-                groupAclFuture
-                    .compose(
-                        groupACLResult -> {
-                          String groupPolicy = groupACLResult;
-                          return isResourceExist(id, groupPolicy);
-                        })
-                    .onSuccess(
-                        handler -> {
-                          promise.complete(resourceIdCache.getIfPresent(id));
-                        })
-                    .onFailure(
-                        handler -> {
-                          LOGGER.error(
-                              "cat response failed for Id : (" + id + ")" + handler.getCause());
-                          promise.fail("Not Found " + id);
-                        });
-
+              accessPolicy -> {
+                promise.complete(accessPolicy);
+              })
+          .onFailure(
+              failure -> {
+                promise.fail(failure.getMessage());
               });
     }
     return promise.future();
@@ -347,46 +326,6 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     return promise.future();
   }
 
-  public Future<Boolean> isResourceExist(String id, String groupAcl) {
-    LOGGER.trace("isResourceExist() started");
-    Promise<Boolean> promise = Promise.promise();
-    String resourceExist = resourceIdCache.getIfPresent(id);
-    if (resourceExist != null) {
-      LOGGER.debug("Info : cache Hit");
-      promise.complete(true);
-    } else {
-      LOGGER.debug("Info : Cache miss : call cat server");
-      catWebClient
-          .get(port, host, path)
-          .addQueryParam("property", "[id]")
-          .addQueryParam("value", "[[" + id + "]]")
-          .addQueryParam("filter", "[id]")
-          .expect(ResponsePredicate.JSON)
-          .send(
-              responseHandler -> {
-                if (responseHandler.failed()) {
-                  promise.fail("false");
-                }
-                HttpResponse<Buffer> response = responseHandler.result();
-                JsonObject responseBody = response.bodyAsJsonObject();
-                if (response.statusCode() != HttpStatus.SC_OK) {
-                  promise.fail("false");
-                } else if (!responseBody.getString("type").equals("urn:dx:cat:Success")) {
-                  promise.fail("Not Found");
-                  return;
-                } else if (responseBody.getInteger("totalHits") == 0) {
-                  LOGGER.debug("Info: Resource ID invalid : Catalogue item Not Found");
-                  promise.fail("Not Found");
-                } else {
-                  LOGGER.debug("is Exist response : " + responseBody);
-                  resourceIdCache.put(id, groupAcl);
-                  promise.complete(true);
-                }
-              });
-    }
-    return promise.future();
-  }
-
   Future<Boolean> isRevokedClientToken(JwtData jwtData) {
     LOGGER.trace("isRevokedClientToken started param : ");
     Promise<Boolean> promise = Promise.promise();
@@ -423,55 +362,47 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     return promise.future();
   }
 
-  public Future<String> getGroupAccessPolicy(String groupId) {
+  public Future<String> getAccessPolicy(String id) {
     LOGGER.trace("getGroupAccessPolicy() started");
     Promise<String> promise = Promise.promise();
-    String groupAcl = resourceGroupCache.getIfPresent(groupId);
-    if (groupAcl != null) {
-      LOGGER.debug("Info : cache Hit");
-      promise.complete(groupAcl);
-    } else {
-      LOGGER.debug("Info : cache miss");
-      catWebClient
-          .get(port, host, path)
-          .addQueryParam("property", "[id]")
-          .addQueryParam("value", "[[" + groupId + "]]")
-          .addQueryParam("filter", "[accessPolicy]")
-          .expect(ResponsePredicate.JSON)
-          .send(
-              httpResponseAsyncResult -> {
-                if (httpResponseAsyncResult.failed()) {
-                  LOGGER.error(httpResponseAsyncResult.cause());
-                  promise.fail("Resource not found");
-                  return;
-                }
-                HttpResponse<Buffer> response = httpResponseAsyncResult.result();
-                if (response.statusCode() != HttpStatus.SC_OK) {
-                  promise.fail("Resource not found");
-                  return;
-                }
-                JsonObject responseBody = response.bodyAsJsonObject();
-                if (!responseBody.getString("type").equals("urn:dx:cat:Success")) {
-                  promise.fail("Resource not found");
-                  return;
-                }
-                String resourceAcl = "SECURE";
-                try {
-                  resourceAcl =
-                      responseBody
-                          .getJsonArray("results")
-                          .getJsonObject(0)
-                          .getString("accessPolicy");
-                  resourceGroupCache.put(groupId, resourceAcl);
-                  LOGGER.debug("Info: Group ID valid : Catalogue item Found");
-                  promise.complete(resourceAcl);
-                } catch (Exception ignored) {
-                  LOGGER.error(ignored.getMessage());
-                  LOGGER.error("Info: Group ID invalid : Empty response in results from Catalogue");
-                  promise.fail("Resource not found");
-                }
-              });
-    }
+
+    catWebClient
+        .get(port, host, path)
+        .addQueryParam("property", "[id]")
+        .addQueryParam("value", "[[" + id + "]]")
+        .addQueryParam("filter", "[accessPolicy]")
+        .expect(ResponsePredicate.JSON)
+        .send(
+            httpResponseAsyncResult -> {
+              if (httpResponseAsyncResult.failed()) {
+                LOGGER.error(httpResponseAsyncResult.cause());
+                promise.fail("Resource not found");
+                return;
+              }
+              HttpResponse<Buffer> response = httpResponseAsyncResult.result();
+              if (response.statusCode() != HttpStatus.SC_OK) {
+                promise.fail("Resource not found");
+                return;
+              }
+              JsonObject responseBody = response.bodyAsJsonObject();
+              if (!responseBody.getString("type").equals("urn:dx:cat:Success")) {
+                promise.fail("Resource not found");
+                return;
+              }
+              String resourceAcl = "SECURE";
+              try {
+                resourceAcl =
+                    responseBody.getJsonArray("results").getJsonObject(0).getString("accessPolicy");
+                resourceIdCache.put(id, resourceAcl);
+                LOGGER.debug("Info: Resource ID is valid : Catalogue item Found");
+                promise.complete(resourceAcl);
+              } catch (Exception ignored) {
+                LOGGER.error(ignored.getMessage());
+                LOGGER.error(
+                    "Info: Resource ID is invalid : Empty response in results from Catalogue");
+                promise.fail("Resource not found");
+              }
+            });
     return promise.future();
   }
 
@@ -480,35 +411,4 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
     JwtData jwtData;
     boolean isOpen;
   }
-
-  public Future<String> getGrupId(String id) {
-    LOGGER.debug("get item for id: {} ", id);
-    Promise<String> promise = Promise.promise();
-
-    catWebClient
-        .get(port, host, path)
-        .addQueryParam("property", "[id]")
-        .addQueryParam("value", "[[" + id + "]]")
-        .addQueryParam("filter", "[id,resourceGroup]")
-        .expect(ResponsePredicate.JSON)
-        .send(
-            relHandler -> {
-              if (relHandler.succeeded()
-                  && relHandler.result().bodyAsJsonObject().getInteger("totalHits") > 0) {
-                JsonArray resultArray =
-                    relHandler.result().bodyAsJsonObject().getJsonArray("results");
-                JsonObject response = resultArray.getJsonObject(0);
-                String groupId =
-                    response.containsKey("resourceGroup") ? response.getString("resourceGroup") :
-                        response.getString("id");
-                promise.complete(groupId);
-              } else {
-                LOGGER.error("catalogue call search api failed: " + relHandler.cause());
-                promise.fail("catalogue call search api failed");
-              }
-            });
-
-    return promise.future();
-  }
-
 }
