@@ -13,8 +13,8 @@ services:
       - LOG_LEVEL=INFO
       - GIS_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/gis-config-test.json:/usr/share/app/configs/config-test.json
-      - /home/ubuntu/configs/keystore-gis.jks:/usr/share/app/configs/keystore.jks
+      - /home/ubuntu/configs/5.5.0/gis-config-test.json:/usr/share/app/configs/config-test.json
+      - /home/ubuntu/configs/5.5.0/keystore-gis.jks:/usr/share/app/configs/keystore.jks
       - ./docker/runTests.sh:/usr/share/app/docker/runTests.sh
       - ./src/:/usr/share/app/src
       - ./iudx-pmd-ruleset.xml:/usr/share/app/iudx-pmd-ruleset.xml
@@ -36,8 +36,8 @@ services:
       - LOG_LEVEL=INFO
       - GIS_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/gis-config-test.json:/usr/share/app/configs/config.json
-      - /home/ubuntu/configs/keystore-gis.jks:/usr/share/app/configs/keystore.jks
+      - /home/ubuntu/configs/5.5.0/gis-config-test.json:/usr/share/app/configs/config.json
+      - /home/ubuntu/configs/5.5.0/keystore-gis.jks:/usr/share/app/configs/keystore.jks
     ports:
       - "8443:8443"
     networks: 
