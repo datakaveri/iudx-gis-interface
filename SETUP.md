@@ -34,6 +34,7 @@ In order to connect to the appropriate Postgres database, required information s
 ```
 {
     "id": "iudx.gis.server.database.postgres.PostgresVerticle",
+    "isWorkerVerticle": <true/false>,
     "verticleInstances": <num-of-verticle-instances>,
     "databaseIp": "localhost",
     "databasePort": <port-number>,
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS gis
 
 ## Setting up Metering for IUDX Gis Interface
 - In Metering Verticle we are pushing data in Auditing Server through RabbitMQ. [config-example.json](configs/config-example.json).
+- RabbitMQ is used to create an auditing exchange under the IUDX-Internal vhosts.
 
 **MeteringVerticle**
 
@@ -117,6 +119,7 @@ In order to connect to the appropriate RabbitMQ instance, required information s
     "dataBrokerPort": <port-number>,
     "dataBrokerUserName": <username-for-rmq>,
     "dataBrokerPassword": <password-for-rmq>,
+    "dataBrokerManagementPort": <port-number>,
     "connectionTimeout": <time-in-milliseconds>,
     "requestedHeartbeat": <time-in-seconds>,
     "handshakeTimeout": <time-in-milliseconds>,
@@ -139,12 +142,13 @@ In order to connect to the DX catalogue server, required information such as cat
 ```
 {
     "id": "iudx.gis.server.authenticator.AuthenticationVerticle",
-    "verticleInstances": <number-of-verticle-instances,
+    "verticleInstances": <number-of-verticle-instances>,
     "audience": <gis-server-host>,
     "authServerHost": <auth-server-host>,
     "catServerHost": <catalogue-server-host>,
     "catServerPort": <catalogue-server-port>,
-    "jwtIgnoreExpiry": <true | false>
+    "jwtIgnoreExpiry": <true | false>,
+    "iss": "<iss-value>"
 }
 ```
 
@@ -153,6 +157,7 @@ In order to connect to the DX catalogue server, required information such as cat
 {
     "id": "iudx.gis.server.apiserver.ApiServerVerticle",
     "ssl": <true | false>,
+    "production": <true | false>,
     "keystore": <path/to/keystore.jks>,
     "keystorePassword": <password-for-keystore>,
     "verticleInstances": <number-of-verticle-instances>,
@@ -168,11 +173,12 @@ In order to connect to the DX authentication server, required information such a
 ```
 {
    "id": "iudx.gis.server.authenticator.AuthenticationVerticle",
-   "verticleInstances": <number-of-verticle-instances,
+   "verticleInstances": <number-of-verticle-instances>,
    "audience": <gis-server-host>,
    "authServerHost": <auth-server-host>,
    "catServerHost": <catalogue-server-host>,
    "catServerPort": <catalogue-server-port>,
-   "jwtIgnoreExpiry": <true | false>
+   "jwtIgnoreExpiry": <true | false>,
+   "iss": "<iss-value>"
 }
 ```
