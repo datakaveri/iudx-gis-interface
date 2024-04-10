@@ -107,6 +107,13 @@ CREATE TABLE IF NOT EXISTS gis
 
 ## Setting up RabbitMQ for IUDX Gis Interface
 - Refer to the docker files available [here](https://github.com/datakaveri/iudx-deployment/blob/master/Docker-Swarm-deployment/single-node/databroker) to setup RMQ.
+- Refer the table for the permission for RMQ setup.
+
+```
+| Permission | Exchange | RoutingKey | Type of Exchange | VHosts        |
+|------------|----------|------------|------------------|---------------|
+| Read/Write | auditing | #          | Direct           | IUDX-INTERNAL |
+```
 
 In order to connect to the appropriate RabbitMQ instance, required information such as dataBrokerIP, dataBrokerPort etc. should be updated in the DataBrokerVerticle module available in [config-example.json](configs/config-example.json).
 
