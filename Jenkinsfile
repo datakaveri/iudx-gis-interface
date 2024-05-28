@@ -86,7 +86,6 @@ pipeline {
       steps{
         node('built-in') {
           script{
-            sh 'mkdir -p configs'
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
             sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/gis/Newman/IUDX_GIS_Server_APIs_V5.5.0.postman_collection.json -e /home/ubuntu/configs/gis-postman-env.json -n 2 --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/gis/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
