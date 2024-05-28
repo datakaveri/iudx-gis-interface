@@ -21,6 +21,22 @@ The Gis Interface also connects with various DX dependencies namely
 - Catalogue Server : used to download the list of resources, access policies and query types supported on a resource.
 - Auditing Server : used to store information of metering in ImmuDB and Postgres.
 
+## Create configs files
+
+Make a copy of sample configs directory and add appropriate values to all files.
+
+```console
+ cp -r example-configs/* .
+```
+
+```
+# configs directory after generation of configs files
+configs/
+├── config-dev.json
+└── config-test.json
+├── keystore.jks
+```
+
 ----
 
 ## Setting up PostgreSQL for IUDX Gis Interface
@@ -28,7 +44,7 @@ The Gis Interface also connects with various DX dependencies namely
 
 **Note** : PostgresQL database should be configured with a RBAC user having CRUD privileges
 
-In order to connect to the appropriate Postgres database, required information such as databaseIP, databasePort etc. should be updated in the PostgresVerticle module available in [config-example.json](configs/config-example.json).
+In order to connect to the appropriate Postgres database, required information such as databaseIP, databasePort etc. should be updated in the PostgresVerticle module available in [config-example.json](example-configs/config-dev.json).
 
 **PostgresVerticle**
 ```
@@ -77,7 +93,7 @@ CREATE TABLE IF NOT EXISTS gis
 ----
 
 ## Setting up Metering for IUDX Gis Interface
-- In Metering Verticle we are pushing data in Auditing Server through RabbitMQ. [config-example.json](configs/config-example.json).
+- In Metering Verticle we are pushing data in Auditing Server through RabbitMQ. [config-example.json](example-configs/config-dev.json).
 - RabbitMQ is used to create an auditing exchange under the IUDX-Internal vhosts.
 
 **MeteringVerticle**
@@ -92,7 +108,7 @@ CREATE TABLE IF NOT EXISTS gis
 ----
 
 ## Setting up Internal Cache Store
-- In order to connect with the internal cache, we need to add cache verticle configs available in [config-example.json](configs/config-example.json).
+- In order to connect with the internal cache, we need to add cache verticle configs available in [config-example.json](example-configs/config-dev.json).
 
 **CacheVerticle**
 
@@ -115,7 +131,7 @@ CREATE TABLE IF NOT EXISTS gis
 | Read/Write | auditing | #          | Direct           | IUDX-INTERNAL |
 ```
 
-In order to connect to the appropriate RabbitMQ instance, required information such as dataBrokerIP, dataBrokerPort etc. should be updated in the DataBrokerVerticle module available in [config-example.json](configs/config-example.json).
+In order to connect to the appropriate RabbitMQ instance, required information such as dataBrokerIP, dataBrokerPort etc. should be updated in the DataBrokerVerticle module available in [config-example.json](example-configs/config-dev.json).
 
 **DataBrokerVerticle**
 ```
@@ -143,7 +159,7 @@ In order to connect to the appropriate RabbitMQ instance, required information s
 ----
 ## Connecting with DX Catalogue Interface
 
-In order to connect to the DX catalogue server, required information such as catServerHost, catServerPort etc. should be updated in the AuthenticationVerticle and ApiServerVerticle modules availabe in [config-example.json](configs/config-example.json).
+In order to connect to the DX catalogue server, required information such as catServerHost, catServerPort etc. should be updated in the AuthenticationVerticle and ApiServerVerticle modules availabe in [config-example.json](example-configs/config-dev.json).
 
 **AuthenticationVerticle**
 ```
@@ -176,7 +192,7 @@ In order to connect to the DX catalogue server, required information such as cat
 
 ## Connecting with DX Authorization Server
 
-In order to connect to the DX authentication server, required information such as authServerHost should be updated in the AuthenticationVerticle module availabe in [config-example.json](configs/config-example.json).
+In order to connect to the DX authentication server, required information such as authServerHost should be updated in the AuthenticationVerticle module availabe in [config-example.json](example-configs/config-dev.json).
 ```
 {
    "id": "iudx.gis.server.authenticator.AuthenticationVerticle",
