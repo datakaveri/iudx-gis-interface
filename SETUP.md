@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS gis
 ----
 
 ## Setting up Metering for IUDX Gis Interface
-- In Metering Verticle we are pushing data in Auditing Server through RabbitMQ. [config-example.json](example-configs/configs/config.json).
+- In Metering Vertical data is pushed to Auditing Server through RabbitMQ. [config-example.json](example-configs/configs/config.json).
 - RabbitMQ is used to create an auditing exchange under the IUDX-Internal vhosts.
 
 **MeteringVerticle**
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS gis
 ----
 
 ## Setting up Internal Cache Store
-- In order to connect with the internal cache, we need to add cache verticle configs available in [config-example.json](example-configs/configs/config.json).
+-  To connect to the internal cache, ensure cache vertical configurations are added. [config-example.json](example-configs/configs/config.json).
 
 **CacheVerticle**
 
