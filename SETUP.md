@@ -32,7 +32,7 @@ Make a copy of sample configs directory and add appropriate values to all files.
 ```
 # configs directory after generation of configs files
 configs/
-├── config-dev.json
+├── config.json
 └── config-test.json
 ├── keystore.jks
 ```
@@ -44,7 +44,7 @@ configs/
 
 **Note** : PostgresQL database should be configured with a RBAC user having CRUD privileges
 
-In order to connect to the appropriate Postgres database, required information such as databaseIP, databasePort etc. should be updated in the PostgresVerticle module available in [config-example.json](example-configs/configs/config-dev.json).
+In order to connect to the appropriate Postgres database, required information such as databaseIP, databasePort etc. should be updated in the PostgresVerticle module available in [config-example.json](example-configs/configs/config.json).
 
 **PostgresVerticle**
 ```
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS gis
 ----
 
 ## Setting up Metering for IUDX Gis Interface
-- In Metering Verticle we are pushing data in Auditing Server through RabbitMQ. [config-example.json](example-configs/configs/config-dev.json).
+- In Metering Verticle we are pushing data in Auditing Server through RabbitMQ. [config-example.json](example-configs/configs/config.json).
 - RabbitMQ is used to create an auditing exchange under the IUDX-Internal vhosts.
 
 **MeteringVerticle**
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS gis
 ----
 
 ## Setting up Internal Cache Store
-- In order to connect with the internal cache, we need to add cache verticle configs available in [config-example.json](example-configs/configs/config-dev.json).
+- In order to connect with the internal cache, we need to add cache verticle configs available in [config-example.json](example-configs/configs/config.json).
 
 **CacheVerticle**
 
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS gis
 | Read/Write | auditing | #          | Direct           | IUDX-INTERNAL |
 ```
 
-In order to connect to the appropriate RabbitMQ instance, required information such as dataBrokerIP, dataBrokerPort etc. should be updated in the DataBrokerVerticle module available in [config-example.json](example-configs/configs/config-dev.json).
+In order to connect to the appropriate RabbitMQ instance, required information such as dataBrokerIP, dataBrokerPort etc. should be updated in the DataBrokerVerticle module available in [config-example.json](example-configs/configs/config.json).
 
 **DataBrokerVerticle**
 ```
@@ -159,7 +159,7 @@ In order to connect to the appropriate RabbitMQ instance, required information s
 ----
 ## Connecting with DX Catalogue Interface
 
-In order to connect to the DX catalogue server, required information such as catServerHost, catServerPort etc. should be updated in the AuthenticationVerticle and ApiServerVerticle modules availabe in [config-example.json](example-configs/configs/config-dev.json).
+In order to connect to the DX catalogue server, required information such as catServerHost, catServerPort etc. should be updated in the AuthenticationVerticle and ApiServerVerticle modules availabe in [config-example.json](example-configs/configs/config.json).
 
 **AuthenticationVerticle**
 ```
@@ -192,7 +192,7 @@ In order to connect to the DX catalogue server, required information such as cat
 
 ## Connecting with DX Authorization Server
 
-In order to connect to the DX authentication server, required information such as authServerHost should be updated in the AuthenticationVerticle module availabe in [config-example.json](example-configs/configs/config-dev.json).
+In order to connect to the DX authentication server, required information such as authServerHost should be updated in the AuthenticationVerticle module availabe in [config-example.json](example-configs/configs/config.json).
 ```
 {
    "id": "iudx.gis.server.authenticator.AuthenticationVerticle",

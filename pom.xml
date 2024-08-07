@@ -33,7 +33,7 @@
 
         <exec.mainClass>iudx.gis.server.deploy.Deployer</exec.mainClass>
         <exec.mainClassDev>iudx.gis.server.deploy.DeployerDev</exec.mainClassDev>
-        <config-dev.file>config-dev.json</config-dev.file>
+        <config-dev.file>config.json</config-dev.file>
     </properties>
 
     <dependencyManagement>
@@ -482,7 +482,7 @@
                                 <argument>{project.build.directory}/${project.artifactId}-dev-${project.version}-fat.jar
                                 </argument>
                                 <argument>-c</argument>
-                                <argument>./configs/config-dev.json</argument>
+                                <argument>./configs/config.json</argument>
                             </arguments>
                         </configuration>
                     </execution>
