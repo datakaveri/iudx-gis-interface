@@ -13,7 +13,7 @@ COPY src src
 RUN mvn clean package -Dmaven.test.skip=true
 
 # Java Runtime as the base for final image
-FROM eclipse-temurin:11-jre-focal
+FROM eclipse-temurin:21.0.5_11-jre-jammy
 
 
 ARG VERSION
