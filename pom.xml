@@ -7,28 +7,28 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <vertx.version>4.5.4</vertx.version>
-        <junit-jupiter-engine.version>5.10.2</junit-jupiter-engine.version>
+        <vertx.version>4.5.11</vertx.version>
+        <junit-jupiter-engine.version>5.11.3</junit-jupiter-engine.version>
         <hazelcast.version>4.0.2</hazelcast.version>
-        <micrometer.version>1.12.3</micrometer.version>
-        <curator.version>5.6.0</curator.version>
+        <micrometer.version>1.14.1</micrometer.version>
+        <curator.version>5.7.1</curator.version>
         <disruptor.version>4.0.0</disruptor.version>
-        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
-        <checkstyle.version>10.14.0</checkstyle.version>
-        <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
-        <maven-shade-plugin.version>3.5.2</maven-shade-plugin.version>
-        <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
-        <exec-maven-plugin.version>3.2.0</exec-maven-plugin.version>
-        <maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
-        <maven-checkstyle-plugin-google.version>3.3.1</maven-checkstyle-plugin-google.version>
-        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
+        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
+        <checkstyle.version>10.20.0</checkstyle.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
+        <maven-javadoc-plugin.version>3.11.1</maven-javadoc-plugin.version>
+        <exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
+        <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
+        <maven-checkstyle-plugin-google.version>3.6.0</maven-checkstyle-plugin-google.version>
+        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
         <log4j2.version>2.23.0</log4j2.version>
-        <testcontainer.version>1.19.7</testcontainer.version>
-        <testcontainer.pg.version>1.19.7</testcontainer.pg.version>
-        <testcontainer.junit-jupiter.version>1.19.7</testcontainer.junit-jupiter.version>
+        <testcontainer.version>1.20.4</testcontainer.version>
+        <testcontainer.pg.version>1.20.4</testcontainer.pg.version>
+        <testcontainer.junit-jupiter.version>1.20.4</testcontainer.junit-jupiter.version>
 
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <exec.mainClass>iudx.gis.server.deploy.Deployer</exec.mainClass>
@@ -106,7 +106,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>33.0.0-jre</version>
+            <version>33.3.1-jre</version>
         </dependency>
         <!-- <dependency> <groupId>org.apache.commons</groupId> <artifactId>commons-lang3</artifactId>
             <version>3.8.1</version> </dependency> -->
@@ -184,13 +184,13 @@
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-commons</artifactId>
-            <version>1.10.2</version>
+            <version>1.11.3</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.junit.platform/junit-platform-engine -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>
-            <version>1.10.2</version>
+            <version>1.11.3</version>
             <scope>test</scope>
         </dependency>
         <!-- Packages for Hazelcast clustering based on Zookeeper discovery -->
@@ -198,7 +198,12 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-hazelcast</artifactId>
         </dependency>
-
+        <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+        </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-rabbitmq-client</artifactId>
@@ -230,7 +235,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.2</version>
+            <version>42.7.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -244,13 +249,13 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.11.0</version>
+            <version>5.14.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.11.0</version>
+            <version>5.14.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -272,6 +277,13 @@
             <groupId>com.redislabs</groupId>
             <artifactId>jrejson</artifactId>
             <version>1.5.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.micrometer/micrometer-registry-prometheus-simpleclient -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus-simpleclient</artifactId>
+            <version>1.14.1</version>
         </dependency>
 
     </dependencies>
@@ -498,8 +510,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>21</source>
+                    <target>21</target>
                     <annotationProcessors>
                         <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
                     </annotationProcessors>
