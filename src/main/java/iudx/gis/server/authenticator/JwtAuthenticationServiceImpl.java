@@ -337,8 +337,8 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
           if (handler.succeeded()) {
 
             JsonObject responseJson = handler.result();
-            String timestamp = responseJson.getString("value");
-
+            String timestamp = responseJson.getString("expiry");
+            LOGGER.info("client revoked at : " + timestamp);
             LocalDateTime revokedAt = LocalDateTime.parse(timestamp);
             LocalDateTime jwtIssuedAt =
                 LocalDateTime.ofInstant(
