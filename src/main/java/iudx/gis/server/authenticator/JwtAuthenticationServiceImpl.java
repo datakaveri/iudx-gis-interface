@@ -343,6 +343,7 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
             LocalDateTime jwtIssuedAt =
                 LocalDateTime.ofInstant(
                     Instant.ofEpochSecond(jwtData.getIat()), ZoneId.systemDefault());
+            LOGGER.info("jwtIssuedAt : " + jwtIssuedAt);
 
             if (jwtIssuedAt.isBefore(revokedAt)) {
               LOGGER.error("Privileges for client are revoked.");
