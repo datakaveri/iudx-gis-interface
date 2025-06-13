@@ -132,9 +132,14 @@ pipeline {
               archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 1
             }  
           }
+        }
+        failure{
+          error "Test failure. Stopping pipeline execution!"
+        }
+        cleanup{
           script{
-             sh 'docker compose -f docker-compose.test.yml down --remove-orphans'
-          }
+            sh 'docker compose -f docker-compose.test.yml down --remove-orphans'
+          } 
         }
       }
     }
