@@ -165,6 +165,7 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
             user -> {
               JwtData jwtData = new JwtData(user.principal());
               jwtData.setExp(user.get("exp"));
+              jwtData.setIat(user.get("iat"));
               promise.complete(jwtData);
             })
         .onFailure(
@@ -337,14 +338,17 @@ public class JwtAuthenticationServiceImpl implements AuthenticationService {
         requestJson,
         handler -> {
           if (handler.succeeded()) {
-
             JsonObject responseJson = handler.result();
             String timestamp = responseJson.getString("value");
 
             LocalDateTime revokedAt = LocalDateTime.parse(timestamp);
+            LOGGER.info("token revoked At: {}", revokedAt);
+
             LocalDateTime jwtIssuedAt =
                 LocalDateTime.ofInstant(
                     Instant.ofEpochSecond(jwtData.getIat()), ZoneId.systemDefault());
+
+            LOGGER.info(" Token issued At: {}", jwtIssuedAt);
 
             if (jwtIssuedAt.isBefore(revokedAt)) {
               LOGGER.error("Privileges for client are revoked.");
