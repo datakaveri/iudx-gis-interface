@@ -14,6 +14,16 @@ pipeline {
   }
   stages {
 
+    stage('Trivy Code Scan (Dependencies)') {
+      steps {
+        script {
+          sh '''
+            trivy fs --scanners vuln,secret,misconfig --output trivy-fs-report.txt .
+          '''
+        }
+      }
+    }
+
     stage('Building images') {
       steps{
         script {
@@ -22,6 +32,27 @@ pipeline {
           deplImage = docker.build( deplRegistry, "-f ./docker/depl.dockerfile .")
           testImage = docker.build( testRegistry, "-f ./docker/test.dockerfile .")
         }
+      }
+    }
+
+    stage('Trivy Docker Image Scan') {
+      steps {
+        script {
+          sh "trivy image --output trivy-dev-image-report.txt ${devImage.imageName()}"
+          sh "trivy image --output trivy-depl-image-report.txt ${deplImage.imageName()}"
+        }
+      }
+    }
+    stage('Archive Trivy Reports') {
+      steps {
+        archiveArtifacts artifacts: 'trivy-*.txt', allowEmptyArchive: true
+        publishHTML(target: [
+          allowMissing: true,
+          keepAll: true,
+          reportDir: '.',
+          reportFiles: 'trivy-fs-report.txt, trivy-dev-image-report.txt, trivy-depl-image-report.txt',
+          reportName: 'Trivy Reports'
+        ])
       }
     }
 
@@ -88,7 +119,7 @@ pipeline {
           script{
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
-            sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/gis/Newman/IUDX_GIS_Server_APIs_V5.5.0.postman_collection.json -e /home/ubuntu/configs/gis-postman-env.json -n 2 --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/gis/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
+            sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/gis/Newman/IUDX_GIS_Server_APIs_V5.5.0.postman_collection.json -e /home/ubuntu/configs/5.6.0/gis-postman-env.json -n 2 --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/gis/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
             runZapAttack()
           }
         }
@@ -101,80 +132,50 @@ pipeline {
               archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 1
             }  
           }
+        }
+        failure{
+          error "Test failure. Stopping pipeline execution!"
+        }
+        cleanup{
           script{
-             sh 'docker compose -f docker-compose.test.yml down --remove-orphans'
-          }
+            sh 'docker compose -f docker-compose.test.yml down --remove-orphans'
+          } 
         }
       }
     }
 
-    stage('Continuous Deployment') {
-      when {
-        allOf {
+    stage('Push Images') {
+  	when {
+    	  allOf {
           anyOf {
-            changeset "docker/**"
-            changeset "docs/**"
-            changeset "pom.xml"
-            changeset "src/main/**"
-            triggeredBy cause: 'UserIdCause'
+        	changeset "docker/**"
+        	changeset "docs/**"
+        	changeset "pom.xml"
+        	changeset "src/main/**"
+        	triggeredBy cause: 'UserIdCause'
           }
           expression {
-            return env.GIT_BRANCH == 'origin/master';
+        	return env.GIT_BRANCH == 'origin/5.6.0';
           }
-        }
-      }
-      stages {
-        stage('Push Images') {
-          steps {
-            script {
-              docker.withRegistry( registryUri, registryCredential ) {
-                devImage.push("5.6.0-alpha-${env.GIT_HASH}")
-                deplImage.push("5.6.0-alpha-${env.GIT_HASH}")
-              }
-            }
+    	  }
+  	}
+  	steps {
+    	  script {
+          docker.withRegistry( registryUri, registryCredential ) {
+        	devImage.push("5.6.0-${env.GIT_HASH}")
+        	deplImage.push("5.6.0-${env.GIT_HASH}")
           }
-        }
-        stage('Docker Swarm deployment') {
-          steps {
-            script {
-              sh "ssh azureuser@docker-swarm 'docker service update gis_gis --image ghcr.io/datakaveri/gis-depl:5.6.0-alpha-${env.GIT_HASH}'"
-              sh 'sleep 20'
-            }
-          }
-          post{
-            failure{
-              error "Failed to deploy image in Docker Swarm"
-            }
-          }
-        }
-        stage('Integration test on swarm deployment') {
-          steps {
-            node('built-in') {
-              script{
-                sh 'newman run /var/lib/jenkins/iudx/gis/Newman/IUDX_GIS_Server_APIs_V5.5.0.postman_collection.json -e /home/ubuntu/configs/cd/gis-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/gis/Newman/report/cd-report.html --reporter-htmlextra-skipSensitiveData'
-              }
-            }
-          }
-          post{
-            always{
-              node('built-in') {
-                script{
-                  publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/gis/Newman/report/', reportFiles: 'cd-report.html', reportTitles: '', reportName: 'Docker-Swarm Integration Test Report'])
-                }
-              }
-            }
-            failure{
-              error "Test failure. Stopping pipeline execution!"
-            }
-          }
-        }
-      }
+    	  }
+  	}
     }
+
   }
+  
+
   post{
     failure{
       script{
-        if (env.GIT_BRANCH == 'origin/master')
+        if (env.GIT_BRANCH == 'origin/5.6.0')
         emailext recipientProviders: [buildUser(), developers()], to: '$RS_RECIPIENTS, $DEFAULT_RECIPIENTS', subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!', body: '''$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
 Check console output at $BUILD_URL to view the results.'''
       }
