@@ -39,7 +39,7 @@ services:
       - LOG_LEVEL=DEBUG
       - GIS_JAVA_OPTS=-Xmx1024m
     volumes:
-      - ./configs/config-dev.json:/usr/share/app/configs/config.json
+      - ./configs/config.json:/usr/share/app/configs/config.json
       - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
     ports:
       - "8080:8080"
